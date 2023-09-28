@@ -20,7 +20,7 @@ byte data_count1 = 0;
 bool Pass_is_good;
 char customKey;
 char customKey1;
-char test = "C";
+
 const byte ROWS = 4;
 const byte COLS = 4;
 
@@ -118,13 +118,7 @@ void loop(){
              break;
           }
           
-        customKey1 = customKeypad.getKey();
-        if (customKey1 == test){
-          Data1[data_count1] = customKey1; 
-          //Serial.print(Data1[data_count1]);
-          Serial.print(customKey1);  
-          data_count1++; 
-        }
+
     }
     }else{
           lcd.clear();
