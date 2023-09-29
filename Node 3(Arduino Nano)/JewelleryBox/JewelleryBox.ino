@@ -12,6 +12,7 @@ int TakeNumber = 1;
 bool IMUInitialized = false;
 bool IMUCalibrated = false;
 bool IMUPresent = false;
+bool Alert = false;
 unsigned long CaptureDelay = 100;
 const int ledGreenPin = 7;
 const int ledRedPin = 6;
@@ -69,44 +70,40 @@ bool displayCalStatus() {
   return calibrated;
 }
 
-void enumerateI2CBus(void)
-{  byte error, address;
+void enumerateI2CBus(void) {
+  byte error, address;
   int nDevices;
 
   Serial.println("Scanning...");
 
   nDevices = 0;
-  for(address = 1; address < 127; address++ ) 
-  {
+  for (address = 1; address < 127; address++) {
     // The i2c_scanner uses the return value of
     // the Write.endTransmisstion to see if
     // a device did acknowledge to the address.
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
 
-    if (error == 0)
-    {
+    if (error == 0) {
       Serial.print("I2C device found at address 0x");
-      if (address<16) 
+      if (address < 16)
         Serial.print("0");
-      Serial.print(address,HEX);
+      Serial.print(address, HEX);
       Serial.println("  !");
 
       nDevices++;
-    }
-    else if (error==4) 
-    {
+    } else if (error == 4) {
       Serial.print("Unknown error at address 0x");
-      if (address<16) 
+      if (address < 16)
         Serial.print("0");
-      Serial.println(address,HEX);
-    }    
+      Serial.println(address, HEX);
+    }
   }
   if (nDevices == 0)
     Serial.println("No I2C devices found\n");
   else
     Serial.println("done\n");
- }
+}
 
 void InitIMU(void) {
   /* Initialise the sensor */
@@ -118,6 +115,7 @@ void InitIMU(void) {
   } else {
     Serial.println("IMU Initialized..");
     IMUPresent = true;
+    IMUInitialized = true;
     sensor.setExtCrystalUse(true);
     StatusAllGood();
   }
@@ -170,14 +168,20 @@ void ReadLineOfData() {
     if (QuatMode) {
       // Quaternion data
       imu::Quaternion quat = sensor.getQuat();
-      if(prevQuat)
-      {
-        if(quat.w() > (prevQuat.w() + 0.004) || quat.w() < (prevQuat.w() - 0.004) || quat.x() > (prevQuat.x() + 0.01) || )
+      if (quat.w() > (prevQuat.w() + 0.004) || quat.w() < (prevQuat.w() - 0.004) || quat.x() > (prevQuat.x() + 0.01) || quat.x() < (prevQuat.x() - 0.01)) {
+        Alert = true;
+        Serial.println("Alert: Movement detected");
       }
+      prevQuat = quat;
       String deets = printQuat(quat, NAMEIMU);
       Serial.println(deets);
     } else {
       imu::Vector<3> euler = sensor.getVector(Adafruit_BNO055::VECTOR_EULER);
+      if (euler.x() > (prevEuler.x() + 0.1) || euler.x() < (prevEuler.x() - 0.1)) {
+        Alert = true;
+        Serial.println("Alert: Movement detected");
+      }
+      prevEuler = euler;
       String deets = printEuler(euler, NAMEIMU);
       Serial.println(deets);
     }
@@ -188,24 +192,31 @@ void setup() {
   Wire.begin();
   /*Some processors also support 10000 (low speed mode), 1000000 (fast mode plus) and 3400000 (high speed mode). */
   Wire.setClock(400000);  //fastmode.... 100000 is normal
-  QuatMode = true;
+  QuatMode = false;
   Serial.begin(115200);
   SetupLEDs();
   enumerateI2CBus();
   InitIMU();
+  // if (IMUInitialized) {
+  //   while (!displayCalStatus() && (Serial.available() == 0)) {
+  //     delay(100);
+  //   }
+  //   IMUCalibrated = true;
+  // } else {
+  //   StatusAllBad();
+  //   Serial.println("You Must Initialize the Sensors Prior to Calibration");
+  //   delay(2000);
+  // }
+  if (QuatMode) {
+    prevQuat = sensor.getQuat();
+  }
+  else
+  {
+    prevEuler = sensor.getVector(Adafruit_BNO055::VECTOR_EULER);
+  }
 }
 
 void loop() {
-  if (IMUInitialized) {
-    while (!displayCalStatus() && (Serial.available() == 0)) {
-      delay(100);
-    }
-    IMUCalibrated = true;
-  } else {
-    StatusAllBad();
-    Serial.println("You Must Initialize the Sensors Prior to Calibration");
-    delay(2000);
-  }
   while (Serial.available() == 0) {
     ReadLineOfData();
     delay(CaptureDelay);
