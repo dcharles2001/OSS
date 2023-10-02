@@ -8,8 +8,10 @@
 
 int Attempts = 3;
 int Criminal = 0;
-int CorrectPass = 0;
+int CorrectPass = 0; 
+int Menu = 1; //Describes the "layer" OF menu we are in
 int List = 1;
+int Option = 1;
 int x = 0;
 
 char Data[Password_Length]; 
@@ -44,6 +46,9 @@ void setup(){
 void loop(){
   if (Criminal == 0){
     if (CorrectPass == 0){
+      Menu = 1; //Describes the "layer" OF menu we are in
+      List = 1; //Options in menu layer 1
+      Option = 1; //Options in menu layer 2
       lcd.setCursor(0,0);
       lcd.print("Enter Password:");
     
@@ -97,25 +102,26 @@ void loop(){
           lcd.clear();
           x = 1;
       }
-      
+ switch(Menu){
+       case 1:
           switch (List){
             case 1:
               lcd.setCursor(0,0);
               lcd.print("A)Lock"); 
               lcd.setCursor(0,1);
-              lcd.print("B)Unlock");
+              lcd.print("B)Network Test");
               break;
             case 2:
               lcd.setCursor(0,0);
-              lcd.print("A)Unlock"); 
+              lcd.print("A)Network Test"); 
               lcd.setCursor(0,1);
-              lcd.print("B)Brechdanua");
+              lcd.print("B)Alarm Test");
               break;
             case 3:
               lcd.setCursor(0,0);
-              lcd.print("A)Brechdanua"); 
+              lcd.print("A)Alarm Test"); 
               lcd.setCursor(0,1);
-              lcd.print("B)Cynio");
+              lcd.print("B)Support");
              break;
             default:
             break;
@@ -144,21 +150,45 @@ void loop(){
           while(customKey == customKeypad.findInList(7)){
             customKey = customKeypad.getKey();
             }
-              lcd.setCursor(0,0);
-              lcd.print("*****ACTIVE*****");
-              List = 4;
+              lcd.clear();
+              Menu = 2;
+              Option = List + 1; 
             
     }else if(customKey == customKeypad.findInList(3)){
            while(customKey == customKeypad.findInList(3)){
               customKey = customKeypad.getKey();
             }
-              lcd.setCursor(0,1);
-              lcd.print("*****ACTIVE*****");
-            List = 4;
+              lcd.clear();
+              Menu = 2;
+              Option = List;
       } 
-   
+    break;
+    case 2:
+      switch(Option){
+        case 1:
+          CorrectPass = 0;
+        break;
+        case 2:
+          lcd.setCursor(0,0);
+          lcd.print("2");
+          back_button();
+        break;
+        case 3:
+          lcd.setCursor(0,0);
+          lcd.print("3");
+          back_button();
+        break;
+        case 4:
+          lcd.setCursor(0,0);
+          lcd.print("(029)2078 9418");
+          lcd.setCursor(0,1);
+          lcd.print("www.OSS.co.scam");
+          back_button();
+        break;
+    break;
+      }
+ }
     }
-    
     }else{
           lcd.clear();
           lcd.print("Freeze Dirtbag!");
@@ -175,4 +205,14 @@ void clearData(){
     Data[data_count--] = 0; 
   }
   return;
+}
+void back_button(){
+    customKey = customKeypad.getKey();
+       if(customKey != customKeypad.findInList(12)){
+        while(customKey != customKeypad.findInList(12)){
+                customKey = customKeypad.getKey();
+              }
+            Menu--;
+       }
+       lcd.clear();
 }
