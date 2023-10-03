@@ -16,8 +16,9 @@ bool Alert = false;
 unsigned long CaptureDelay = 100;
 const int ledGreenPin = 7;
 const int ledRedPin = 6;
-imu::Quaternion prevQuat;
-imu::Vector<3> prevEuler;
+imu::Quaternion prevData[10];
+imu::Quaternion avgData;
+int arrayPosition = 0;
 
 
 void SetupLEDs() {
@@ -141,21 +142,6 @@ String printQuat(imu::Quaternion &quat, String SensorName) {
   return ReturnString;
 }
 
-String printEuler(imu::Vector<3> &euler, String SensorName) {
-  String ReturnString = "~~";
-  ReturnString += SensorName;
-  // Display the floating point data
-  ReturnString += "~X:";
-  ReturnString += String(euler.x());
-  ReturnString += "~Y:";
-  ReturnString += String(euler.y());
-  ReturnString += "~Z:";
-  ReturnString += String(euler.z());
-  ReturnString += "~";
-
-  return ReturnString;
-}
-
 void ReadLineOfData() {
   if (IMUPresent) {
     // Possible vector values can be:
@@ -165,34 +151,45 @@ void ReadLineOfData() {
     // - VECTOR_EULER         - degrees
     // - VECTOR_LINEARACCEL   - m/s^2
     // - VECTOR_GRAVITY       - m/s^2
-    if (QuatMode) {
-      // Quaternion data
       imu::Quaternion quat = sensor.getQuat();
-      if (quat.w() > (prevQuat.w() + 0.004) || quat.w() < (prevQuat.w() - 0.004) || quat.x() > (prevQuat.x() + 0.01) || quat.x() < (prevQuat.x() - 0.01)) {
+      if (quat.w() > (avgData.w() + 0.001) || quat.w() < (avgData.w() - 0.001)) {
         Alert = true;
         Serial.println("Alert: Movement detected");
       }
-      prevQuat = quat;
+      prevData[arrayPosition] = quat;
+      getAverage();
+      arrayPosition++;
+      if(arrayPosition >= 10)
+        arrayPosition = 0;
       String deets = printQuat(quat, NAMEIMU);
       Serial.println(deets);
-    } else {
-      imu::Vector<3> euler = sensor.getVector(Adafruit_BNO055::VECTOR_EULER);
-      if (euler.x() > (prevEuler.x() + 0.1) || euler.x() < (prevEuler.x() - 0.1)) {
-        Alert = true;
-        Serial.println("Alert: Movement detected");
-      }
-      prevEuler = euler;
-      String deets = printEuler(euler, NAMEIMU);
-      Serial.println(deets);
-    }
   }
+}
+
+void getAverage()
+{
+  double w = 0;
+  double x = 0;
+  double y = 0;
+  double z = 0;
+  for(int i = 0; i < 10; i++){
+    w += prevData[i].w();
+    x += prevData[i].x();
+    y += prevData[i].y();
+    z += prevData[i].z();
+  }
+  avgData.w() = w/10;
+  avgData.x() = x/10;
+  avgData.y() = y/10;
+  avgData.z() = z/10;
+  String average = printQuat(avgData,NAMEIMU);
+  Serial.println("Average Quat is " + average);
 }
 
 void setup() {
   Wire.begin();
   /*Some processors also support 10000 (low speed mode), 1000000 (fast mode plus) and 3400000 (high speed mode). */
   Wire.setClock(400000);  //fastmode.... 100000 is normal
-  QuatMode = false;
   Serial.begin(115200);
   SetupLEDs();
   enumerateI2CBus();
@@ -207,13 +204,10 @@ void setup() {
   //   Serial.println("You Must Initialize the Sensors Prior to Calibration");
   //   delay(2000);
   // }
-  if (QuatMode) {
-    prevQuat = sensor.getQuat();
+  for(int i = 0; i < 10; i++){
+    prevData[i] = sensor.getQuat();
   }
-  else
-  {
-    prevEuler = sensor.getVector(Adafruit_BNO055::VECTOR_EULER);
-  }
+  getAverage();
 }
 
 void loop() {
