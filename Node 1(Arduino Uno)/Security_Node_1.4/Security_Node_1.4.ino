@@ -2,16 +2,13 @@
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
 #include <arduino-timer.h>
-
+#include <ezBuzzer.h>
 
 #define Password_Length 5 
 #define RLED 12
-#define Alarm 11
 #define BTN 13
 
 auto timer = timer_create_default();
-auto timer2 = timer_create_default();
-
 int Attempts = 1;
 int Criminal = 0;
 int CorrectPass = 0; 
@@ -22,6 +19,7 @@ int Seconds = 10;
 int x = 0;
 int btn = 0;
 int RESET = 0;
+const int Alarm = 11;
 char Data[Password_Length]; 
 char Master[Password_Length] = "123A"; 
 byte data_count = 0, master_count = 0;
@@ -37,35 +35,47 @@ char hexaKeys[ROWS][COLS] = {
   {'*', '0', '#', 'D'}
 };
 
+int tune[] = {
+  NOTE_G4,NOTE_C4,NOTE_G5,
+  NOTE_C5
+  };
+int noteDurations[] = {
+    6, 6 ,6 ,6
+  };
 byte rowPins[ROWS] = {9, 8, 7, 6};
 byte colPins[COLS] = {5, 4, 3, 2};
 
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);  
+LiquidCrystal_I2C lcd(0x27, 16, 2); 
+
+ezBuzzer buzzer(Alarm);
+
+int length = sizeof(noteDurations) / sizeof(int);
 
 bool countdown(void * /* optional argument given to in/at/every */) {
-  if(CorrectPass == 0 && Criminal == 1){
+  if(CorrectPass == 0 && Criminal == 1 ){
     Seconds--;
     if(Seconds>9){
     lcd.setCursor(12,1);
     }else{
-      lcd.setCursor(11,1);
+      lcd.setCursor(13,1);
     }
-    lcd.print("(");
-    lcd.print(Seconds);
-    lcd.print(")");
-    if (Seconds<0){
-      return false;
-    }
-    }
-    return true;
+    if (Seconds>0){
+      lcd.print("(");
+      lcd.print(Seconds);
+      lcd.print(")");
+    }if(Seconds == 0){
+         lcd.clear();
+      }else if (Seconds < 0){
+      lcd.setCursor(0,0);
+      lcd.print("****ALARMED!****");  
+      Flash();
+      buzzer.playMelody(tune, noteDurations, length);
+      }
   }
-
-bool Flash(void *){
-    Siren();
-    return true;
-  }
+  return true;
+}
  
         
 void setup(){
@@ -76,13 +86,14 @@ void setup(){
   pinMode(BTN, INPUT);
   Serial.begin(9600);
   timer.every(1000, countdown);
-  timer2.every(250, Flash);
 }
 
 void loop(){
+  buzzer.loop();
   if (RESET == 0){
     if (Criminal == 0){
       if (CorrectPass == 0){
+        digitalWrite(RLED, 0);
         Menu = 1; //Describes the "layer" OF menu we are in
         List = 1; //Options in menu layer 1
         Option = 1; //Options in menu layer 2
@@ -231,8 +242,11 @@ void loop(){
             lcd.print("Alarm Test");
             delay(1000);
             for(int i = 0; i<6; i++){
-                Siren();
-                delay(250);
+                Flash();
+                analogWrite(Alarm, 230);
+                delay(125);
+                analogWrite(Alarm, 0);
+                delay(125);
             }
             lcd.clear();
             lcd.print("Test Over");
@@ -253,11 +267,12 @@ void loop(){
       }
       }else{
         timer.tick();
-        lcd.setCursor(0,0);
-        lcd.print("Enter Password:");
-      
+        if(RESET == 0){
+          lcd.setCursor(0,0);
+          lcd.print("Enter Password:");
+        }
         customKey = customKeypad.getKey();
-        if (customKey){
+        if (customKey && Seconds > 0){
           Data[data_count] = customKey; 
           lcd.setCursor(data_count,1); 
           lcd.print(Data[data_count]); 
@@ -267,8 +282,8 @@ void loop(){
         if(data_count == Password_Length-1){
           lcd.clear();
       
-          if(!strcmp(Data, Master)){
-            lcd.print("Correct, banana");
+          if(!strcmp(Data, Master) && (Seconds > 0)){
+            lcd.print("Correct, press #");
             CorrectPass = 1;
             Criminal = 0;
             delay(500);
@@ -277,17 +292,20 @@ void loop(){
                 customKey = customKeypad.getKey();
               }
             }
-          }else{
-                lcd.clear();
-                lcd.print("****ALARMED!****");
-                timer.cancel();
-                lcd.print("                ");
-                timer2.tick();
+        }else{
                 RESET = 1;
-           }
-        }        
+                Seconds = 0;
+                lcd.clear();
+        }         
       }
+      if (Seconds == 0){
+          RESET = 1;
+          lcd.clear();
+        }
+      
+     }
     }else{
+      timer.tick();
          btn = digitalRead(BTN);
                   if(btn == 1){
                     RESET = 0;
@@ -301,8 +319,8 @@ void loop(){
                     x = 0;
                     data_count = 0, master_count = 0;
                     lcd.clear();
-                    lcd.print("Locking");
-                    delay(500);
+                    lcd.print("Resetting");
+                    delay(750);
                   lcd.clear();
           }
       }
@@ -312,13 +330,8 @@ void loop(){
 
 
 
-void Siren(){
+void Flash(){
     digitalWrite(RLED, !digitalRead(RLED));
-    if (digitalRead(RLED) == 1){
-      analogWrite(Alarm, 230);
-    }else{
-      analogWrite(Alarm, 0);
-      }
   }
 
 
@@ -334,6 +347,7 @@ void back_button(){
         while(customKey != customKeypad.findInList(12)){
                 customKey = customKeypad.getKey();
               }
+            lcd.clear();
             Menu--;
        }
 }
