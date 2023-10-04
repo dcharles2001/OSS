@@ -39,8 +39,6 @@ FirebaseConfig configuration;
 
 String WifiIP = "";
 
-char Buffer[5];
-
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
@@ -86,6 +84,8 @@ void setup() {
 FirebaseJson Content;
 bool taskcompleted = false;
 bool change = false;
+bool RESET = false;
+char incomingByte = 0;
 
 void loop(){
   /*
@@ -120,9 +120,8 @@ void loop(){
         Serial.println("Updating Document...");
         Content.clear();
         Content.set("fields/NodeActive/stringValue", "true");
-        Content.set("fields/NodeAddr/stringValue", NODE_ADDR.c_str());
+        Content.set("fields/NodeAddr/stringValue", WifiIP.c_str());
         Content.set("fields/NodeName/stringValue", NODE_NAME.c_str());
-        Content.set("fields/NodeName/stringValue", WifiIP.c_str());
     
         if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, "", DocumentPath.c_str(), Content.raw(), "NodeActive, NodeAddr, NodeName")){
           Serial.println("Done");
@@ -152,13 +151,6 @@ void loop(){
       }
 
       Serial.println("Getting Indexes");
-      
-      if (Firebase.Firestore.getIndex(&fbdo, FIREBASE_PROJECT_ID, "", "NodeInfo", "IpAddress")){
-        Serial.println(fbdo.payload().c_str());
-      }
-      else{
-        Serial.println(fbdo.errorReason());
-      }
     }
 
     /*
@@ -178,20 +170,15 @@ void loop(){
     */
 
     // set up the system to receive commands and then display them on the system
-    if (Serial.available()){
-      int i = 0;
-      while (Serial.available()){
-        char incomingByte = Serial.read();
-        Buffer[i] = incomingByte;
-        i++;
-      }
+    if ((Serial.available() > 0) && (RESET == false)){
+      incomingByte = Serial.read();
+      //RESET = true;
     }
 
-    Serial.println(Buffer);
-    
-    if (Buffer == "AA01"){
-        Serial.println("Running Command");  
+    if (incomingByte == 'A'){
+      Serial.println("Running Command");
+      incomingByte = 0;
+      Serial.println("0"); // Successful command completion
     }
-    
   } 
 }
