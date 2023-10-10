@@ -9,9 +9,60 @@ import tkinter as tk
 from tkinter import ttk
 from re import findall
 from subprocess import Popen, PIPE
+from cryptography.fernet import Fernet
+import csv
 
-Masterusername = "FirebaseOssHosting"
-Masterpassword = "1234"
+cred = credentials.Certificate("ossweb-97b03-firebase-adminsdk-ra39j-a588abd756.json")
+
+firebase_admin.initialize_app(cred, {
+    'projectId' : "ossweb-97b03"
+})
+
+db = firestore.client()
+
+keystorage = db.collection("Key").document("Key")
+
+def Key_Gen():
+    key = Fernet.generate_key()
+
+    data = {"Key" : key}
+
+    keystorage.set(data)
+
+def Load_Key():
+    result = keystorage.get().to_dict()
+    key = result['Key']
+    return key
+
+
+#Key_Gen()
+
+def encrypt(filename, key):
+    f = Fernet(key)
+
+    with open(filename, "rb") as file:
+        file_data = file.read()
+    
+    encrypted_data = f.encrypt(file_data)
+
+    with open(filename, "wb") as file:
+        file.write(encrypted_data)
+
+def decrypt(filename, key):
+    f = Fernet(key)
+
+    with open(filename, "rb") as file:
+        encrypted_data = file.read()
+    
+    decrypted_data = f.decrypt(encrypted_data)
+
+    with open(filename, "wb") as file:
+        file.write(decrypted_data)
+
+key = Load_Key()
+file = "login.csv"
+
+encrypt(file, key)
 
 login = tk.Tk()
 login.geometry("700x400")
@@ -21,15 +72,33 @@ user = tk.Entry(login)
 user.pack()
 password = tk.Label(login, text="Password")
 password.pack()
-passwordent = tk.Entry(login)
+passwordent = tk.Entry(login, show='*')
 passwordent.pack()
 
 loginallowed = 0
 
 def CheckandLogin():
     global loginallowed
+    global key, file
+    decrypt(file, key)
     usernameresult = user.get()
     passwordresult = passwordent.get()
+
+    with open("login.csv", 'r') as filedata:
+        csvreader = filedata.readlines()
+
+    header = csvreader[:1]
+    rows = csvreader[1:]
+
+    header = header[0].split(",")[1]
+    rows = rows[0].split(",")[1]
+
+    Masterusername = header
+    Masterpassword = rows
+    
+    filedata.close()
+
+    encrypt(file, key)
 
     if (usernameresult == Masterusername) and (passwordresult == Masterpassword):
         loginallowed = 1
@@ -47,13 +116,7 @@ if loginallowed == 0:
     quit()
 
 #setup
-cred = credentials.Certificate("ossweb-97b03-firebase-adminsdk-ra39j-a588abd756.json")
 
-firebase_admin.initialize_app(cred, {
-    'projectId' : "ossweb-97b03"
-})
-
-db = firestore.client()
 
 
 '''
@@ -86,6 +149,7 @@ Tabs.add(Info, text="Information")
 Tabs.pack(expand=1, fill="both")
 
 table = ttk.Treeview(Dashboard)
+
 
 
 def DashboardFunction(BigDict) -> None:
@@ -239,8 +303,14 @@ def UpdateNodesCallback():
 UpdateNodeBtn = tk.Button(AddNewNode, text="Update Node", command=UpdateNodesCallback)
 UpdateNodeBtn.pack()
 
+def Reset_Key():
+    global file, key
+    decrypt(file, key)
+    key = Key_Gen()
+    encrypt(file, key)
 
-## Data from sensor
+ResetKeyBtn = tk.Button(Info, text="RESET KEY", command= Reset_Key)
+ResetKeyBtn.pack()
 
 
 root.mainloop()
