@@ -7,8 +7,6 @@
 
 Adafruit_BNO055 sensor = Adafruit_BNO055(-1, BNO055_ADDRESS_B, 6, -1);
 
-bool QuatMode;
-int TakeNumber = 1;
 bool IMUInitialized = false;
 bool IMUCalibrated = false;
 bool IMUPresent = false;
@@ -155,6 +153,9 @@ void ReadLineOfData() {
       if (quat.w() > (avgData.w() + 0.001) || quat.w() < (avgData.w() - 0.001)) {
         Alert = true;
         Serial.println("Alert: Movement detected");
+        StatusAllBad();
+      } else{
+        StatusAllGood();
       }
       prevData[arrayPosition] = quat;
       getAverage();
