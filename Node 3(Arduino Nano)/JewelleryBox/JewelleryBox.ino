@@ -12,24 +12,22 @@ bool IMUCalibrated = false;
 bool IMUPresent = false;
 bool Alert = false;
 unsigned long CaptureDelay = 100;
-const int ledGreenPin = 7;
-const int ledRedPin = 6;
 imu::Quaternion prevData[10];
 imu::Quaternion avgData;
 int arrayPosition = 0;
 
 
 void SetupLEDs() {
-  pinMode(ledGreenPin, OUTPUT);
-  pinMode(ledRedPin, OUTPUT);
+  pinMode(D7, OUTPUT);
+  pinMode(D6, OUTPUT);
 }
 void StatusAllGood() {
-  digitalWrite(ledGreenPin, HIGH);
-  digitalWrite(ledRedPin, LOW);
+  digitalWrite(D7, HIGH);
+  digitalWrite(D6, LOW);
 }
 void StatusAllBad() {
-  digitalWrite(ledGreenPin, LOW);
-  digitalWrite(ledRedPin, HIGH);
+  digitalWrite(D7, LOW);
+  digitalWrite(D6, HIGH);
 }
 
 bool displayCalStatus() {
