@@ -1,5 +1,5 @@
-#define sensorPin A0
-
+#define sensorPin D1
+//#define BTN D1
 
 void setup() {
   // put your setup code here, to run once:
@@ -10,7 +10,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-    int sensorValue = analogRead(sensorPin);
+    int sensorValue = digitalRead(sensorPin);
     Serial.println(sensorValue);
-    delay(200);
+    delay(50);
 }
