@@ -62,7 +62,18 @@ def decrypt(filename, key):
 key = Load_Key()
 file = "login.csv"
 
-encrypt(file, key)
+filetest = open(file, 'r')
+
+header = filetest.readlines()[:1]
+header = header[0].split(",")[0]
+header = header[0:4]
+
+
+print(header)
+
+if header == 'User':
+    print("encrypting")
+    encrypt(file, key)
 
 login = tk.Tk()
 login.geometry("700x400")
