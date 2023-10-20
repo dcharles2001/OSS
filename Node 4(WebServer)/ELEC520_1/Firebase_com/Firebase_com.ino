@@ -21,15 +21,15 @@ const String NODE_ADDR = "01";
 #define USER_EMAIL "ethanbarrett11@gmail.com"
 #define USER_PASSWORD "EBarrett@01"
 
-
+/*
 #define USER_SSID "Galaxy S21 FE 5G195a"
 #define USER_PASS "EBarrett123"
+*/
 
 
-/*
 #define USER_SSID "GOLETTINGS"
 #define USER_PASS "BAYSWATER"
-*/
+
 
 #define FIREBASE_PROJECT_ID "ossweb-97b03"
 
@@ -38,6 +38,26 @@ FirebaseAuth auth;
 FirebaseConfig configuration;
 
 String WifiIP = "";
+
+// Gossip Algorithm
+
+class gossip{
+  private:
+    char Ips[100] = {'10.1.23'};
+
+  public:
+    gossip();
+    void ChooseIp();
+    void AddIpstoList();
+
+    void chattoIp();
+    void UpdateFirebase();
+};
+
+gossip::gossip(){
+  Serial.print("Hi");
+}
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -82,29 +102,15 @@ void setup() {
 }
 
 FirebaseJson Content;
+FirebaseJsonData Result;
 bool taskcompleted = false;
 bool change = false;
 bool RESET = false;
 char incomingByte = 0;
 
 void loop(){
-  /*
-  if (Firebase.ready() != taskcompleted){
-    taskcompleted = true;
-
-    String collectionID = "NodeInfo";
-
-    Serial.println("Listing the documents in a collection");
-
-    if (Firebase.Firestore.listDocuments(&fbdo, FIREBASE_PROJECT_ID, "", collectionID.c_str(), 4, "", "", "", false)){
-      Serial.println(fbdo.payload().c_str());
-    }
-    else {
-      Serial.println(fbdo.errorReason());
-    }
-  }
-  */
-
+  
+  // Check if the Firebase has a document and if so update it and if not create one and update it.
   if (Firebase.ready()){
     String Collection = "NodeInfo/";
     String DocumentPath = Collection + NODE_NAME;
@@ -152,22 +158,7 @@ void loop(){
 
       Serial.println("Getting Indexes");
     }
-
-    /*
-    // Update the Values Field with Change if detected
-    if (change){
-      Content.clear();
-      Content.set("fields/NodeAlert/stringValue", "ACTIVE");
-      
-      if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, "", DocumentPath.c_str(), Content.raw(), "NodeActive, NodeAddr, NodeName")){
-        Serial.println("Done");
-        Serial.println(fbdo.payload().c_str());
-      }
-      else{
-        Serial.println(fbdo.errorReason());
-      }
-    }
-    */
+    
 
     // set up the system to receive commands and then display them on the system
     if ((Serial.available() > 0) && (RESET == false)){

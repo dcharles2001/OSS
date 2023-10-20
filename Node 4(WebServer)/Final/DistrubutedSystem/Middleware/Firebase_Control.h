@@ -10,12 +10,9 @@
 #include <Firebase_ESP_Client.h>
 #include "addons/Tokenhelper.h"
 #include "addons/RTDBHelper.h"
+#include <Arduino.h>
 
+void UpdateDocument();
 
-class FirebaseControl{
-  private:
-  
-  public:
-};
 
 #endif
