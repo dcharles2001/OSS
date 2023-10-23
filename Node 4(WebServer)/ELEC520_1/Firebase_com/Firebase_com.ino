@@ -106,7 +106,10 @@ FirebaseJsonData Result;
 bool taskcompleted = false;
 bool change = false;
 bool RESET = false;
-char incomingByte = 0;
+char incomingByte = 'A';
+
+// Function Prototypes
+void rtdbDownloadCallback(RTDB_DownloadStatusInfo info);
 
 void loop(){
   
@@ -159,17 +162,46 @@ void loop(){
       Serial.println("Getting Indexes");
     }
     
-
+    /*
     // set up the system to receive commands and then display them on the system
     if ((Serial.available() > 0) && (RESET == false)){
       incomingByte = Serial.read();
       //RESET = true;
     }
+    */
 
     if (incomingByte == 'A'){
-      Serial.println("Running Command");
-      incomingByte = 0;
-      Serial.println("0"); // Successful command completion
+      Serial.println("Starting Firmware Update!");
+
+      if(!Firebase.RTDB.downloadOTA(&fbdo, F("firmware/bin"), rtdbDownloadCallback)){
+        Serial.println(fbdo.errorReason());
+      }
     }
+    else if 
   } 
+}
+
+void rtdbDownloadCallback(RTDB_DownloadStatusInfo info){
+  if(info.status == firebase_rtdb_download_status_init){
+    Serial.print("Downloading Firmware File");
+    Serial.print(info.remotePath.c_str());
+    Serial.println(info.size);
+  }
+  else if (info.status == firebase_rtdb_download_status_download){
+    Serial.print("Downloaded: ");
+    Serial.print((int)info.progress);
+    Serial.print("%, Elapsed Time: ");
+    Serial.print(info.elaspedTime);
+    Serial.println("ms");
+  }
+  else if (info.status == firebase_rtdb_download_status_complete){
+    Serial.println("Update Firmware completed!");
+    Serial.println("Restarting...");
+    delay(200);
+    ESP.restart();
+  }
+  else if (info.status == firebase_rtdb_download_status_error){
+    Serial.println("Download Failed");
+    Serial.println(info.errorMsg.c_str());
+  }
 }
