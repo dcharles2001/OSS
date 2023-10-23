@@ -56,7 +56,7 @@ void loop() {
   // put your main code here, to run repeatedly:
   if (Firebase.ready()){
     // Log Ip address
-    Firebase.set(&fbdom, "/NodesIP/IPAddresses", WiFi.localIP().toString().c_str());
+    Firebase.set(&fbdo, "/NodesIP/IPAddresses", WiFi.localIP().toString().c_str());
     // 
   }
 }
