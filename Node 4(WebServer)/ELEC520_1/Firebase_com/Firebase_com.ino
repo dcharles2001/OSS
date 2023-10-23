@@ -8,6 +8,7 @@
 #include <ESP8266WiFi.h>
 #include "addons/Tokenhelper.h"
 #include "addons/RTDBHelper.h"
+#include <ESP32Ping.h>
 
 // EDIT THESE VALUES
 const String NODE_NAME = "Node1";
@@ -41,23 +42,17 @@ String WifiIP = "";
 
 // Gossip Algorithm
 
-class gossip{
-  private:
-    char Ips[100] = {'10.1.23'};
+struct {
+  bool alive = true;
+  bool isalive = false;
+  bool firebasealive = true;
+  char* Ipaddress = "";
+  char* RecvIpaddress = "";
+  char* nameofrecv = "";
+  bool alarm = false;
+} Gossip_Package;
 
-  public:
-    gossip();
-    void ChooseIp();
-    void AddIpstoList();
-
-    void chattoIp();
-    void UpdateFirebase();
-};
-
-gossip::gossip(){
-  Serial.print("Hi");
-}
-
+IPAddress ip;
 
 void setup() {
   // put your setup code here, to run once:
@@ -74,7 +69,7 @@ void setup() {
   Serial.print("Connected with IP: ");
   Serial.println(WiFi.localIP());
   WifiIP = WiFi.localIP().toString();
-  
+  ip = WiFi.localIP();
 
   configuration.api_key = API_Key;
 
@@ -107,14 +102,17 @@ bool taskcompleted = false;
 bool change = false;
 bool RESET = false;
 char incomingByte = 'A';
+String Ipaddresses[255];
 
 // Function Prototypes
 void rtdbDownloadCallback(RTDB_DownloadStatusInfo info);
+void Gossip();
 
 void loop(){
   
   // Check if the Firebase has a document and if so update it and if not create one and update it.
   if (Firebase.ready()){
+    Gossip_Package.firebasealive = true;
     String Collection = "NodeInfo/";
     String DocumentPath = Collection + NODE_NAME;
 
@@ -169,16 +167,27 @@ void loop(){
       //RESET = true;
     }
     */
+  }
 
-    if (incomingByte == 'A'){
-      Serial.println("Starting Firmware Update!");
+  // Check firebase
+  else if (!firebase.ready()){
+    Gossip_Package.firebasealive = false;
+  }
 
-      if(!Firebase.RTDB.downloadOTA(&fbdo, F("firmware/bin"), rtdbDownloadCallback)){
-        Serial.println(fbdo.errorReason());
-      }
+  // Check for Ip addresses
+
+
+  if (incomingByte == 'A'){
+    // Firmware OTA Update
+    Serial.println("Starting Firmware Update!");
+
+    if(!Firebase.RTDB.downloadOTA(&fbdo, F("firmware/bin"), rtdbDownloadCallback)){
+      Serial.println(fbdo.errorReason());
     }
-    else if 
-  } 
+  }
+  else if  (incomingByte == 'B'){
+    // other application
+  }
 }
 
 void rtdbDownloadCallback(RTDB_DownloadStatusInfo info){
@@ -203,5 +212,49 @@ void rtdbDownloadCallback(RTDB_DownloadStatusInfo info){
   else if (info.status == firebase_rtdb_download_status_error){
     Serial.println("Download Failed");
     Serial.println(info.errorMsg.c_str());
+  }
+}
+
+WifiClient client;
+
+void Gossip(){
+  String ipbody = "";
+  String ipbody_string;
+
+  ipbody_string = ipbody + ip[0] + "." + ip[1] + "." + ip[2] + ".";
+  const char *remoteHost;
+
+
+  // check for ip addresses
+  int noips = 0;
+  for (int i = 0; i < 255; i++){
+    ipbody_string = ipbody + i;
+    remoteHost = ipbody_string.c_str();
+
+    if (Ping.ping(remoteHost)){
+      Ipaddresses[noips];
+      // send a message
+      // NodeName, Ipaddress, active, alarm
+      String Package = NODE_NAME + "," + ip + "," + Gossip_Package.active + "," + Gossip_Package.alarm;
+      connect(remoteHost, 80);
+
+      client.print(Package.c_str());
+
+      Serial.println("Sending Package...");
+      Serial.println(Package.c_str());
+
+      noips++;
+    }
+  }
+
+  if (Gossip_Package.firebasealive){
+    // update firebase of alarm
+    if (Gossip_Package.alarm){
+      Content.clear();
+      Content.set("fields/NodeAlarm/stringValue", "true");
+
+      // pacth document for the app to recognise
+      Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, "", "NodeInfo/Node1" , Content.raw());
+    }
   }
 }
