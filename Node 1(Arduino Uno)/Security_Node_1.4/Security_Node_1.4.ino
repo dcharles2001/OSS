@@ -1,6 +1,7 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-#include <Keypad.h>
+//#include <Keypad.h>
+#include "Adafruit_Keypad.h"
 #include <arduino-timer.h>
 #include <ezBuzzer.h>
 
@@ -9,7 +10,7 @@
 #define BTN 13
 
 auto timer = timer_create_default();
-int Attempts = 1;
+int Attempts = 3;
 int Criminal = 0;
 int CorrectPass = 0; 
 int Menu = 1; //Describes the "layer" OF menu we are in
@@ -24,7 +25,7 @@ char Data[Password_Length];
 char Master[Password_Length] = "123A"; 
 byte data_count = 0, master_count = 0;
 bool Pass_is_good;
-char customKey;
+keypadEvent customKey;
 const byte ROWS = 4;
 const byte COLS = 4;
 
@@ -42,10 +43,10 @@ int tune[] = {
 int noteDurations[] = {
     6, 6 ,6 ,6
   };
-byte rowPins[ROWS] = {9, 8, 7, 6};
-byte colPins[COLS] = {5, 4, 3, 2};
+byte rowPins[ROWS] = {7, 6, 5, 4};
+byte colPins[COLS] = {3, 2, 13, 12};
 
-Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
+Adafruit_Keypad customKeypad = Adafruit_Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
 LiquidCrystal_I2C lcd(0x27, 16, 2); 
 
@@ -86,10 +87,13 @@ void setup(){
   pinMode(BTN, INPUT);
   Serial.begin(9600);
   timer.every(1000, countdown);
+  customKeypad.begin();
 }
 
 void loop(){
   buzzer.loop();
+  customKeypad.tick();
+
   if (RESET == 0){
     if (Criminal == 0){
       if (CorrectPass == 0){
@@ -101,9 +105,9 @@ void loop(){
         lcd.setCursor(0,0);
         lcd.print("Enter Password:");
       
-        customKey = customKeypad.getKey();
-        if (customKey){
-          Data[data_count] = customKey; 
+        customKey = customKeypad.read();
+        if (customKey.bit.EVENT == KEY_JUST_PRESSED){
+          Data[data_count] = (char)customKey.bit.KEY; 
           lcd.setCursor(data_count,1); 
           lcd.print(Data[data_count]); 
           data_count++; 
@@ -113,14 +117,9 @@ void loop(){
           lcd.clear();
       
           if(!strcmp(Data, Master)){
-            lcd.print("Correct, press #");
             CorrectPass = 1;
+            customKeypad.clear();
             delay(500);
-            if(customKey != customKeypad.findInList(14)){
-             while(customKey != customKeypad.findInList(14)){
-                customKey = customKeypad.getKey();
-              }
-            }
           }
           else{
             lcd.print("Incorrect");
@@ -132,7 +131,7 @@ void loop(){
               lcd.print(Attempts);
               lcd.print(")");
               lcd.setCursor(0,1); 
-              lcd.print("Attempts left"); 
+              lcd.print("Attempt(s) left"); 
               delay(2000);
             }else{
               lcd.clear();
@@ -178,37 +177,32 @@ void loop(){
               default:
               break;
             }
-           customKey = customKeypad.getKey();
-          if(customKey == customKeypad.findInList(11)){
-            while(customKey == customKeypad.findInList(11)){
-              customKey = customKeypad.getKey();
-              }
-              if(List>1){
-              List--;
-              Serial.print(List);
-              lcd.clear();
-              }
-              
-      }else if(customKey == customKeypad.findInList(15)){
-             while(customKey == customKeypad.findInList(15)){
-                customKey = customKeypad.getKey();
-              }
+          customKey = customKeypad.read();
+          if ((customKey.bit.EVENT == KEY_JUST_PRESSED) && (customKey.bit.KEY == 'C')){
+            if (List>1){
+            List--;
+            Serial.print(List);
+            lcd.clear();
+          }
+          
+
+      }else if((customKey.bit.EVENT == KEY_JUST_PRESSED) && (customKey.bit.KEY == 'D')){
               if(List<3){
               List++;
               Serial.print(List);
               lcd.clear();
               }  
-      }else if(customKey == customKeypad.findInList(7)){
-            while(customKey == customKeypad.findInList(7)){
-              customKey = customKeypad.getKey();
+      }else if((char)customKey.bit.KEY == 'B'){
+            while((char)customKey.bit.KEY == 'B'){
+              customKey = customKeypad.read();
               }
                 lcd.clear();
                 Menu = 2;
                 Option = List + 1; 
               
-      }else if(customKey == customKeypad.findInList(3)){
-             while(customKey == customKeypad.findInList(3)){
-                customKey = customKeypad.getKey();
+      }else if((char)customKey.bit.KEY == 'A'){
+             while((char)customKey.bit.KEY == 'A'){
+                customKey = customKeypad.read();
               }
                 lcd.clear();
                 Menu = 2;
@@ -250,9 +244,9 @@ void loop(){
             }
             lcd.clear();
             lcd.print("Test Over");
-            lcd.setCursor(0,1);
-            lcd.print("Press * to end");
-            back_button();
+            customKeypad.clear();
+            Menu = 1;
+            delay(500);
           break;
           case 4:
             lcd.setCursor(0,0);
@@ -271,9 +265,9 @@ void loop(){
           lcd.setCursor(0,0);
           lcd.print("Enter Password:");
         }
-        customKey = customKeypad.getKey();
-        if (customKey && Seconds > 0){
-          Data[data_count] = customKey; 
+        customKey = customKeypad.read();
+        if ((customKey.bit.EVENT == KEY_JUST_PRESSED) && (Seconds > 0)){
+          Data[data_count] = customKey.bit.KEY; 
           lcd.setCursor(data_count,1); 
           lcd.print(Data[data_count]); 
           data_count++; 
@@ -283,15 +277,17 @@ void loop(){
           lcd.clear();
       
           if(!strcmp(Data, Master) && (Seconds > 0)){
-            lcd.print("Correct, press #");
             CorrectPass = 1;
             Criminal = 0;
+            customKeypad.clear();
             delay(500);
-            if(customKey != customKeypad.findInList(14)){
-             while(customKey != customKeypad.findInList(14)){
-                customKey = customKeypad.getKey();
+            /*
+            if((char)customKey.bit.KEY != '#'){
+             while((char)customKey.bit.KEY != '#'){
+                customKey = customKeypad.read();
               }
             }
+            */
         }else{
                 RESET = 1;
                 Seconds = 0;
@@ -306,7 +302,7 @@ void loop(){
      }
     }else{
       timer.tick();
-         btn = digitalRead(BTN);
+         btn = 0;
                   if(btn == 1){
                     RESET = 0;
                     Attempts = 3;
@@ -342,11 +338,8 @@ void clearData(){
   return;
 }
 void back_button(){
-    customKey = customKeypad.getKey();
-       if(customKey != customKeypad.findInList(12)){
-        while(customKey != customKeypad.findInList(12)){
-                customKey = customKeypad.getKey();
-              }
+    customKey = customKeypad.read();
+       if((customKey.bit.EVENT == KEY_JUST_PRESSED) && (customKey.bit.KEY == '*')){
             lcd.clear();
             Menu--;
        }
