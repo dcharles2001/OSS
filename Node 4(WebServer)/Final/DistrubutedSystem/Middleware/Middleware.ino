@@ -1,62 +1,45 @@
+//https://howtomechatronics.com/tutorials/arduino/how-to-build-an-arduino-wireless-network-with-multiple-nrf24l01-modules/
+
 #include <ESP8266WiFi.h>
-#include <Firebase_ESP_Client.h>
-#include "addons/TokenHelper.h"
-#include "addons/RTDBHelper.h"
+#include <SPI.h>
+#include <RF24Network>
+#include <RF24.h>
 
-#define WIFI_SSID "GOLETTINGS"
-#define WIFI_PASS "BAYSWATER"
+RF24 radio(7, 8);
+RF24Network NodeNetwork(radio);
 
-#define API_KEY "AIzaSyD5M2Zhd_S7WjA2Z8KxesSECRO9vQgfjrM"
-#define RTDB_URL "https://ossweb-97b03-default-rtdb.europe-west1.firebasedatabase.app/"
+uint16_t this_node = 00;
+uint16_t Master Node = 00;
+uint16_t NearestNeightbour = 00;
 
-#define USER_EMAIL "ethanbarrett11@gmail.com"
-#define USER_PASSWORD "EBarrett@01"
 
-FirebaseData fbdo;
-FirebaseAuth auth;
-FirebaseConfig config;
+struct {
+  bool IsfromCurrent = false;
+  uint16_t OriginAddr = 01;
+  uint16_t DeliveryAddr = 01;
+  char Message[] = "";
+} payload;
 
+String Nodes[256] = [];
+String NodeAddr[256] = [];
+
+String PathtoMaster[100] = [];
+bool Connected_to_Mesh = false;
+
+// function prototypes
+void Handshake();
+void Path_to_Master();
+void Pass_Payload_to_Master();
+int  Choose_Master();
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  Serial.print("Connecting to WiFi");
-  while(WiFi.status() != WL_CONNECTED){
-    Serial.print(".");
-    delay(300);
-  }
-  
-  Serial.println();
-  Serial.print("Connected with IP: ");
-  Serial.println(WiFi.localIP());
-
-  config.api_key = API_KEY;
-  config.database_url = RTDB_URL;
-
-  auth.user.email = USER_EMAIL;
-  auth.user.password = USER_PASSWORD;
-
-  Firebase.reconnectNetwork(true);
-  fbdo.setBSSLBufferSize(4096, 1024);
-  fbdo.setResponseSize(4096);
-
-  if (Firebase.signUp(&config, &auth, "", "")){
-    Serial.println("Ok");
-  }
-  else{
-    Serial.println("%s", config.signer.signupError.message.c_str());
-  }
-
-  Firebase.begin(&config, &auth);
-  Firebase.reconnectWiFi(true);
+  SPI.begin();
+  radio.begin();
+  NodeNetwork.begin(90, this_node);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  if (Firebase.ready()){
-    // Log Ip address
-    Firebase.set(&fbdo, "/NodesIP/IPAddresses", WiFi.localIP().toString().c_str());
-    // 
-  }
+  NodeNetwork.update(); // Check for any updates to the network
+  
 }
