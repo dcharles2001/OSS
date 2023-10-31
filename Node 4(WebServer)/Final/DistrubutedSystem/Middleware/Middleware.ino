@@ -9,7 +9,7 @@ RF24 radio(7, 8);
 RF24Network NodeNetwork(radio);
 
 uint16_t this_node = 00;
-uint16_t Master Node = 00;
+uint16_t Master_Node = 00;
 uint16_t NearestNeightbour = 00;
 
 
@@ -17,8 +17,15 @@ struct {
   bool IsfromCurrent = false;
   uint16_t OriginAddr = 01;
   uint16_t DeliveryAddr = 01;
-  char Message[] = "";
+  char Message[] = "Hello World!";
 } payload;
+
+struct {
+  bool IsfromCurrent = false;
+  uint16_t OriginAddr = 01;
+  uint16_t DeliveryAddr = 01;
+  char Message[] = "Hello World!";
+} payload_incoming;
 
 String Nodes[256] = [];
 String NodeAddr[256] = [];
@@ -42,4 +49,13 @@ void setup() {
 void loop() {
   NodeNetwork.update(); // Check for any updates to the network
   
+  if (this_node != Master_Node){
+    RF24NetworkHeader header(Master_Node);
+    bool ok = NodeNetwork.write(header, &payload, sizeof(payload));
+  }
+  else if (this_node == Master_Node){
+    RF24NetworkHeader header;
+    network.read(header, &payload_incoming, sizeof(payload_incoming));
+  }
+
 }
