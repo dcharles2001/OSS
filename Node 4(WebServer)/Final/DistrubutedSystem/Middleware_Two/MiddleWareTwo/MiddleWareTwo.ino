@@ -1,9 +1,12 @@
-void setup() {
-  // put your setup code here, to run once:
+#include "Master.h"
 
+NodeSystem Nodes;
+
+void setup() {
+  Serial.begin(9600);
+  Nodes.JoinNetwork();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
+  Nodes.RUNSYS();
 }
