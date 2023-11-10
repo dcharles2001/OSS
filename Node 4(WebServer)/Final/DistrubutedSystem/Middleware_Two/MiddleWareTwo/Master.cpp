@@ -95,7 +95,7 @@ void NodeSystem::PingMaster(){
 }
 
 void NodeSystem::CommandRejoinNetwork(){
-  String Message = "REJN;"
+  String Message = "REJN;";
 
   RF24NetworkHeader header;
   network.multicast(header, &Message, sizeof(Message), 1);
@@ -201,7 +201,7 @@ void NodeSystem::StartVote(){
     network.write(header, &Message)
   }
   */
-  String Message = "VTST;"
+  String Message = "VTST;";
 
   RF24NetworkHeader header;
   network.multicast(header, &Message, sizeof(Message), 1);
@@ -224,33 +224,36 @@ void NodeSystem::RUNSYS(){
   // SINC -> Second In Command Update Key
   // REJN -> Rejoin Network Command
   //
+  String Message;
+
+  //======RECEIVING======//
+  Message = this->Receive();
+  //Message = "Hello;World;";
+    
+  int Idx = Message.indexOf(";");
+  String Beginning = Message.substring(0, Idx);
+
+  int Idx2 = Message.indexOf(';', Idx+1 );
+  String End = Message.substring(Idx+1, Idx2);
 
   if (this->this_node == this->MasterNode){
     //////////////////////
     //======MASTER======//
     //////////////////////
-    String Message;
-
-    //======RECEIVING======//
-    Message = this->Receive();
-    //Message = "Hello;World;";
-    
-    int Idx = Message.indexOf(";");
-    String Beginning = Message.substring(0, Idx);
-
-    int Idx2 = Message.indexOf(';', Idx+1 );
-    String End = Message.substring(Idx+1, Idx2);
 
     if (Beginning == "PING"){
       //======IS MASTER ALIVE?======//
+      Serial.println("Ping Pong");
       this->RespondToPing();
     }
     else if (Beginning == "ATTN"){
       //======ADDING A NODE======//
+      Serial.println("Adding Node");
       this->AddNode(End);
     }
     else if (Beginning == "VOTE"){
       //======VOTING======//
+      Serial.println("Voting Started");
       if ((this->VotingStarted == false) && (this->VotingEnded == false)){
         this->VoteRecv(End, this->AddressPos, this->VotingStarted, this->VotingEnded);
         this->VotingStarted = true;
@@ -292,7 +295,7 @@ void NodeSystem::RUNSYS(){
     String Beginning = Message.substring(0, Idx);
 
     if (Beginning == "VTST"){
-      this->Voting();
+      this->Voting(16);
     }
     else if (Beginning == "REJN"){
       this->RejoinNetwork();
