@@ -8,18 +8,18 @@ RF24Network network(radio);
 ///////////////////////////////
 
 void NodeSystem::JoinNetwork(){
+  Serial.println("Joining Network");
   //======JOIN THE NETWORK======//
   SPI.begin();
   radio.begin();
-  radio.setChannel(90);
-  network.begin(this->this_node);
+  network.begin(90, 03/*this->this_node*/);
 
   //======SEND THE ADDRESS OF THE NEW NODE TO THE MASTER======//
-  RF24NetworkHeader header(this->MasterNode);
-  String ProtoMessage = "ATTN;" + this->this_node;
-  String Message = ProtoMessage + ";";
+  //RF24NetworkHeader header(this->MasterNode);
+  //String ProtoMessage = "ATTN;" + this->this_node;
+  //String Message = ProtoMessage + ";";
 
-  network.write(header, &Message, sizeof(Message));
+  //network.write(header, &Message, sizeof(Message));
 
 }
 
@@ -53,7 +53,7 @@ String NodeSystem::Receive(){
   String Message;
 
   while (network.available()){
-    RF24NetworkHeader RecvHeader;
+   RF24NetworkHeader RecvHeader;
     network.read(RecvHeader, &Message, sizeof(Message));
   }
 
@@ -72,16 +72,19 @@ void NodeSystem::PingMaster(){
   //======TRANSMITTING======//
   String Message = "PING;";
   String MessageResponse;
-  RF24NetworkHeader header(this->MasterNode);
-  network.read(header, &Message, sizeof(Message));
+  RF24NetworkHeader header(00 /*this->MasterNode*/);
+  network.write(header, &Message, sizeof(Message));
 
+  Serial.println(Message);
+
+  /*
   delay(10);
 
   while (network.available()){
     RF24NetworkHeader RecvHeader;
     network.read(RecvHeader, &MessageResponse, sizeof(MessageResponse));
   }
-
+`
   if (MessageResponse == "PONG"){
     Serial.println("Ping Successful");
   }
@@ -92,6 +95,7 @@ void NodeSystem::PingMaster(){
     this->UpdateToMaster();
     this->CommandRejoinNetwork();
   }
+  */
 }
 
 void NodeSystem::CommandRejoinNetwork(){
