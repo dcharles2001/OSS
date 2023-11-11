@@ -20,9 +20,11 @@ class NodeSystem{
     bool VotingEnded = false;
 
   public:
-    uint16_t this_node = 03;
+    uint16_t this_node = 00;
     uint16_t MasterNode = 00;
     uint16_t SecondaryNode = 01;
+
+    void UpdateNetwork();
   
     void JoinNetwork(); //
     void RejoinNetwork();

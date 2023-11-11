@@ -10,8 +10,10 @@ void setup() {
 }
 
 void loop() {
+  Nodes.UpdateNetwork();
   //Nodes.RUNSYS();
   //String M = Nodes.Receive();
   //Serial.println(M);
+
   Nodes.PingMaster();
 }

@@ -7,6 +7,10 @@ RF24Network network(radio);
 //======BASIC FUNCTIONS======//
 ///////////////////////////////
 
+void NodeSystem::UpdateNetwork(){
+  network.update();
+}
+
 void NodeSystem::JoinNetwork(){
   Serial.println("Joining Network");
   //======JOIN THE NETWORK======//
