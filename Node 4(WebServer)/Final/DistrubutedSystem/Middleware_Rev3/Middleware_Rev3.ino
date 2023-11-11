@@ -3,7 +3,7 @@
 Middleware_OS MOS;
 
 void setup(){
-  MOS.setup();
+  MOS.Setup();
   Serial.begin(9600);
 }
 
