@@ -8,6 +8,8 @@ void setup(){
 }
 
 void loop(){
+  MOS.Update();
+  
   String Message = "Hello World!";
   MOS.Send(Message, 01);
 

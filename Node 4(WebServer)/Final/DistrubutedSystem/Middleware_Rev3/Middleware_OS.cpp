@@ -3,14 +3,17 @@
 RF24 radio(D4, D2);
 RF24Network network(radio);
 
-void  Middleware_OS::Setup(){
+void Middleware_OS::Setup(){
   SPI.begin();
   radio.begin();
   network.begin(90, this->Node);
 }
 
-void Middleware_OS::Send(String Message, uint16_t Node){
+void Middleware_OS::Update(){
   network.update();
+}
+
+void Middleware_OS::Send(String Message, uint16_t Node){
 
   Serial.print("Sending: ");
   Serial.println(Message);
@@ -19,7 +22,6 @@ void Middleware_OS::Send(String Message, uint16_t Node){
 }
 
 String Middleware_OS::Receive(){
-  network.update();
   String Message;
 
   while (network.available()){

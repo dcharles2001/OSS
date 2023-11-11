@@ -13,6 +13,7 @@ class Middleware_OS{
 
   public:
     void Setup();
+    void Update();
     void Send(String Message, uint16_t Node);
     String Receive();
 };
