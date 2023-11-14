@@ -180,7 +180,7 @@ void ReadLineOfData() {
     // - VECTOR_GRAVITY       - m/s^2
       imu::Quaternion quat = sensor.getQuat();
       imu::Vector<3> accel = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-      if (checkMovement(quat, accel)) {
+      if (checkMovement(quat, accel) && enableAlerts == true) {
         Alert = true;
         Serial.println("Alert: Movement detected");
         StatusAllBad();
