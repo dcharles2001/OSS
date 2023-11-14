@@ -12,6 +12,10 @@
 #define MAX_DISTANCE 400
 #define OPEN_DISTANCE 30  
 
+float Dist;
+int Sound;
+int Alarm = 0;
+
 // NewPing setup of pins and maximum distance.
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 
@@ -21,15 +25,20 @@ void setup() {
 }
 
 void loop() {
-  float Dist = ((sonar.ping() / 2) * 0.0343);
-  int sensorValue = digitalRead(sensorPin);
+  Dist = ((sonar.ping() / 2) * 0.0343);
+  sensorValue = digitalRead(sensorPin);
   if (Dist > OPEN_DISTANCE){
-    Serial.println("Theifing Git");
+    Alarm = 1;
+    Serial.println("Safe Open");
     }else{
         Serial.print("Distance = ");
         Serial.print(Dist);
         Serial.println(" cm");
       }
+  if (sensorValue == 1){
+    Serial.print("Noise Detected");
+    Alarm = 1;
+    }
   Serial.println(sensorValue);
   delay(100);
 }

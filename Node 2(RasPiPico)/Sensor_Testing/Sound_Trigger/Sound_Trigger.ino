@@ -1,4 +1,4 @@
-#define sensorPin D1
+#define sensorPin 7
 //#define BTN D1
 
 void setup() {
