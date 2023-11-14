@@ -11,6 +11,7 @@ bool IMUInitialized = false;
 bool IMUCalibrated = false;
 bool IMUPresent = false;
 bool Alert = false;
+bool enableAlerts = false;
 unsigned long CaptureDelay = 100;
 imu::Quaternion prevQuat[10];
 imu::Quaternion avgQuat;
@@ -249,12 +250,16 @@ void setup() {
 void loop() {
   while (Serial.available() == 0) {
     ReadLineOfData();
-    if(avgQuat.w() == 0 && avgAccel.x() == 0 && cycles > 10)
+    if(cycles > 10 && enableAlerts == false)
     {
-      Serial.println("IMU unresponsive");
-      ESP.restart();
+      enableAlerts = true;
+      if(avgQuat.w() == 0 && avgAccel.x() == 0){
+        Serial.println("IMU unresponsive");
+        ESP.restart();
+      }
+    } else {
+      cycles++;
     }
-    cycles++;
     delay(CaptureDelay);
   }
 }
