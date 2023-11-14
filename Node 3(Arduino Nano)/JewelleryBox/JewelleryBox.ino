@@ -17,6 +17,7 @@ imu::Quaternion avgQuat;
 imu::Vector<3> prevAccel[10];
 imu::Vector<3> avgAccel;
 int arrayPosition = 0;
+int cycles = 0;
 
 
 void SetupLEDs() {
@@ -144,21 +145,21 @@ String printQuat(imu::Quaternion &quat, String SensorName) {
 String printAccel(imu::Vector<3> &accel) {
   String ReturnString = "Speed: ";
   ReturnString += "Sideways:";
-  ReturnString += String(accel(0), 4);
+  ReturnString += String(accel.x(), 4);
   ReturnString += "~Approach:";
-  ReturnString += String(accel(1), 4);
+  ReturnString += String(accel.y(), 4);
   ReturnString += "~Vertical:";
-  ReturnString += String(accel(2), 4);
+  ReturnString += String(accel.z(), 4);
   ReturnString += "~";
   return ReturnString;
 }
 
 bool checkMovement(imu::Quaternion quat, imu::Vector<3> accel){
-  if (quat.w() > (avgQuat.w() + 0.001) || quat.w() < (avgQuat.w() - 0.001)) {
+  if (quat.w() > (avgQuat.w() + 0.003) || quat.w() < (avgQuat.w() - 0.003)) {
     return true;
-  } else if (accel.x() > (avgAccel.x() + 0.5) || accel.x() < (avgAccel.x() - 0.5)){
+  } else if (accel.x() > (avgAccel.x() + 1) || accel.x() < (avgAccel.x() - 1)){
     return true;
-  } if (accel.y() > (avgAccel.y() + 0.5) || accel.y() < (avgAccel.y() - 0.5)) {
+  } if (accel.y() > (avgAccel.y() + 1) || accel.y() < (avgAccel.y() - 1)) {
     return true;
   } if (accel.z() > (avgAccel.z() + 1) || accel.z() < (avgAccel.z() - 1)) {
     return true;
@@ -238,16 +239,6 @@ void setup() {
   SetupLEDs();
   enumerateI2CBus();
   InitIMU();
-  // if (IMUInitialized) {
-  //   while (!displayCalStatus() && (Serial.available() == 0)) {
-  //     delay(100);
-  //   }
-  //   IMUCalibrated = true;
-  // } else {
-  //   StatusAllBad();
-  //   Serial.println("You Must Initialize the Sensors Prior to Calibration");
-  //   delay(2000);
-  // }
   for(int i = 0; i < 10; i++){
     prevQuat[i] = sensor.getQuat();
     prevAccel[i] = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
@@ -258,6 +249,12 @@ void setup() {
 void loop() {
   while (Serial.available() == 0) {
     ReadLineOfData();
+    if(avgQuat.w() == 0 && avgAccel.x() == 0 && cycles > 10)
+    {
+      Serial.println("IMU unresponsive");
+      ESP.restart();
+    }
+    cycles++;
     delay(CaptureDelay);
   }
 }
