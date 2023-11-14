@@ -5,15 +5,17 @@
 
 #define NAMEIMU "god"
 
-Adafruit_BNO055 sensor = Adafruit_BNO055(-1, BNO055_ADDRESS_B, 6, -1);
+Adafruit_BNO055 sensor = Adafruit_BNO055(55,BNO055_ADDRESS_B);
 
 bool IMUInitialized = false;
 bool IMUCalibrated = false;
 bool IMUPresent = false;
 bool Alert = false;
 unsigned long CaptureDelay = 100;
-imu::Quaternion prevData[10];
-imu::Quaternion avgData;
+imu::Quaternion prevQuat[10];
+imu::Quaternion avgQuat;
+imu::Vector<3> prevAccel[10];
+imu::Vector<3> avgAccel;
 int arrayPosition = 0;
 
 
@@ -71,6 +73,7 @@ void enumerateI2CBus(void) {
   byte error, address;
   int nDevices;
 
+  Serial.println("");
   Serial.println("Scanning...");
 
   nDevices = 0;
@@ -138,6 +141,32 @@ String printQuat(imu::Quaternion &quat, String SensorName) {
   return ReturnString;
 }
 
+String printAccel(imu::Vector<3> &accel) {
+  String ReturnString = "Speed: ";
+  ReturnString += "Sideways:";
+  ReturnString += String(accel(0), 4);
+  ReturnString += "~Approach:";
+  ReturnString += String(accel(1), 4);
+  ReturnString += "~Vertical:";
+  ReturnString += String(accel(2), 4);
+  ReturnString += "~";
+  return ReturnString;
+}
+
+bool checkMovement(imu::Quaternion quat, imu::Vector<3> accel){
+  if (quat.w() > (avgQuat.w() + 0.001) || quat.w() < (avgQuat.w() - 0.001)) {
+    return true;
+  } else if (accel.x() > (avgAccel.x() + 0.5) || accel.x() < (avgAccel.x() - 0.5)){
+    return true;
+  } if (accel.y() > (avgAccel.y() + 0.5) || accel.y() < (avgAccel.y() - 0.5)) {
+    return true;
+  } if (accel.z() > (avgAccel.z() + 1) || accel.z() < (avgAccel.z() - 1)) {
+    return true;
+  } else{
+    return false;
+  }
+}
+
 void ReadLineOfData() {
   if (IMUPresent) {
     // Possible vector values can be:
@@ -148,20 +177,23 @@ void ReadLineOfData() {
     // - VECTOR_LINEARACCEL   - m/s^2
     // - VECTOR_GRAVITY       - m/s^2
       imu::Quaternion quat = sensor.getQuat();
-      if (quat.w() > (avgData.w() + 0.001) || quat.w() < (avgData.w() - 0.001)) {
+      imu::Vector<3> accel = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+      if (checkMovement(quat, accel)) {
         Alert = true;
         Serial.println("Alert: Movement detected");
         StatusAllBad();
       } else{
         StatusAllGood();
       }
-      prevData[arrayPosition] = quat;
+      prevQuat[arrayPosition] = quat;
+      prevAccel[arrayPosition] = accel;
       getAverage();
       arrayPosition++;
       if(arrayPosition >= 10)
         arrayPosition = 0;
       String deets = printQuat(quat, NAMEIMU);
-      Serial.println(deets);
+      String speed = printAccel(accel);
+      Serial.println(deets + speed);
   }
 }
 
@@ -172,24 +204,37 @@ void getAverage()
   double y = 0;
   double z = 0;
   for(int i = 0; i < 10; i++){
-    w += prevData[i].w();
-    x += prevData[i].x();
-    y += prevData[i].y();
-    z += prevData[i].z();
+    w += prevQuat[i].w();
+    x += prevQuat[i].x();
+    y += prevQuat[i].y();
+    z += prevQuat[i].z();
   }
-  avgData.w() = w/10;
-  avgData.x() = x/10;
-  avgData.y() = y/10;
-  avgData.z() = z/10;
-  String average = printQuat(avgData,NAMEIMU);
-  Serial.println("Average Quat is " + average);
+  avgQuat.w() = w/10;
+  avgQuat.x() = x/10;
+  avgQuat.y() = y/10;
+  avgQuat.z() = z/10;
+  x = 0;
+  y = 0;
+  z = 0;
+  for(int i = 0; i < 10; i++){
+    x += prevAccel[i].x();
+    y += prevAccel[i].y();
+    z += prevAccel[i].z();
+  }
+  avgAccel.x() = x/10;
+  avgAccel.y() = y/10;
+  avgAccel.z() = z/10;
+  
+  String averageQuat = printQuat(avgQuat,NAMEIMU);
+  String averageAccel = printAccel(avgAccel);
+  Serial.println("Average Quat is " + averageQuat + " Average " + averageAccel);
 }
 
 void setup() {
+  Serial.begin(115200);
   Wire.begin();
   /*Some processors also support 10000 (low speed mode), 1000000 (fast mode plus) and 3400000 (high speed mode). */
-  Wire.setClock(400000);  //fastmode.... 100000 is normal
-  Serial.begin(115200);
+  Wire.setClock(400000);  //fastmode.... 100000 is norma
   SetupLEDs();
   enumerateI2CBus();
   InitIMU();
@@ -204,7 +249,8 @@ void setup() {
   //   delay(2000);
   // }
   for(int i = 0; i < 10; i++){
-    prevData[i] = sensor.getQuat();
+    prevQuat[i] = sensor.getQuat();
+    prevAccel[i] = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
   }
   getAverage();
 }
