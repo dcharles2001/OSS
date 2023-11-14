@@ -236,7 +236,7 @@ void setup() {
   Serial.begin(115200);
   Wire.begin();
   /*Some processors also support 10000 (low speed mode), 1000000 (fast mode plus) and 3400000 (high speed mode). */
-  Wire.setClock(400000);  //fastmode.... 100000 is norma
+  Wire.setClock(400000);  //fastmode.... 100000 is normal
   SetupLEDs();
   enumerateI2CBus();
   InitIMU();
