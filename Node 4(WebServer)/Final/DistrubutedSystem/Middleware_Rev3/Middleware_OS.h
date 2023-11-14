@@ -1,21 +1,14 @@
 #ifndef Middleware_OS_H
 #define Middleware_OS_H
 
-#include <Arduino.h>
-#include <RF24.h>
-#include <RF24Network.h>
-#include <SPI.h>
+extern painlessMesh mesh;
+extern Scheduler userSchedular;
 
-class Middleware_OS{
-  private:
-    uint16_t Node = 00; // current node
-    uint16_t Node01 = 01;
-
-  public:
-    void Setup();
-    void Update();
-    void Send(String Message, uint16_t Node);
-    String Receive();
-};
+void Setup();
+void sendMessage();
+void receivedCallback( uint32_t from, String &msg );
+void newConnectionCallback(uint32_t nodeId);
+void changedConnectionCallback();
+void nodeTimeAdjustedCallback(int32_t offset);
 
 #endif

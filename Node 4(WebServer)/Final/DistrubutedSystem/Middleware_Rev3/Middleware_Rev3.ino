@@ -1,18 +1,14 @@
 #include "Middleware_OS.h"
 
-Middleware_OS MOS;
+//Middleware_OS MOS;
+
+extern painlessMesh mesh;
+extern Scheduler userSchedular;
 
 void setup(){
-  MOS.Setup();
-  Serial.begin(9600);
+  Setup();
 }
 
 void loop(){
-  MOS.Update();
-  
-  String Message = "Hello World!";
-  MOS.Send(Message, 01);
-
-  // String Response = MOS.Receive();
-  // Serial.println(Response);
+  mesh.update();
 }

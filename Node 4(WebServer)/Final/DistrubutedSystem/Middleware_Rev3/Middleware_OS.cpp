@@ -1,33 +1,44 @@
 #include "Middleware_OS.h"
 
-RF24 radio(D4, D2);
-RF24Network network(radio);
 
-void Middleware_OS::Setup(){
-  SPI.begin();
-  radio.begin();
-  network.begin(90, this->Node);
+Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
+
+void Setup(){
+  Serial.begin(115200);
+
+//mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
+  mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
+
+  mesh.init( MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT );
+  mesh.onReceive(&receivedCallback);
+  mesh.onNewConnection(&newConnectionCallback);
+  mesh.onChangedConnections(&changedConnectionCallback);
+  mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
+
+  userScheduler.addTask( taskSendMessage );
+  taskSendMessage.enable();
 }
 
-void Middleware_OS::Update(){
-  network.update();
+void sendMessage() {
+  String msg = "Sorry";
+  //msg += mesh.getNodeId();
+  mesh.sendBroadcast( msg );
+  taskSendMessage.setInterval( random( TASK_SECOND * 1, TASK_SECOND * 5 ));
 }
 
-void Middleware_OS::Send(String Message, uint16_t Node){
-
-  Serial.print("Sending: ");
-  Serial.println(Message);
-  RF24NetworkHeader header(Node);
-  bool ok = network.write(header, &Message, sizeof(Message));
+// Needed for painless library
+void receivedCallback( uint32_t from, String &msg ) {
+  Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
 }
 
-String Middleware_OS::Receive(){
-  String Message;
+void newConnectionCallback(uint32_t nodeId) {
+    Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
+}
 
-  while (network.available()){
-    RF24NetworkHeader header;
-    network.read(header, &Message, sizeof(Message));
-  }
+void changedConnectionCallback() {
+  Serial.printf("Changed connections\n");
+}
 
-  return Message;
+void nodeTimeAdjustedCallback(int32_t offset) {
+    Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),offset);
 }
