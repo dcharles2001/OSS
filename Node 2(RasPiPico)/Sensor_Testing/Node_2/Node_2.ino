@@ -5,7 +5,6 @@
 // Hook up HC-SR04 with Trig to Arduino Pin 9, Echo to Arduino pin 10
 #define TRIGGER_PIN 12 //D6
 #define ECHO_PIN 14  //D5
-
 #define sensorPin 13 //D7
 
 // Maximum distance we want to ping for (in centimeters).
@@ -40,5 +39,4 @@ void loop() {
     Alarm = 1;
     }
   Serial.println(sensorValue);
-  delay(100);
 }
