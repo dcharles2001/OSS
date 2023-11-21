@@ -9,6 +9,7 @@
 #define RLED 12
 #define BTN 13
 #define disarmSig A3
+#define armSig A0
 SoftwareSerial ESPSerial(8,9);
 
 auto timer = timer_create_default();
@@ -31,7 +32,7 @@ keypadEvent customKey;
 const byte ROWS = 4;
 const byte COLS = 4;
 int disarm = 0;
-
+int arm = 0;
 char hexaKeys[ROWS][COLS] = {
   {'1', '2', '3', 'A'},
   {'4', '5', '6', 'B'},
@@ -93,12 +94,27 @@ void setup(){
   Serial.begin(9600);
   timer.every(1000, countdown);
   customKeypad.begin();
+  //attachInterrupt(armSig, Print, RISING);
 }
 
 void loop(){
   buzzer.loop();
   customKeypad.tick();
-
+  arm = analogRead(armSig);
+  Serial.print("Arm = ");
+  Serial.println(arm);
+  disarm = analogRead(disarmSig);
+  Serial.print("Disarm = ");
+  Serial.println(disarm);
+  if(arm > 100){
+    Criminal = 1;
+    CorrectPass = 0;
+    Seconds = 0;
+    timer.tick();
+    }else if(disarm > 100){
+      resetFunc();
+      }
+    
   if (RESET == 0){
     if (Criminal == 0){
       if (CorrectPass == 0){
@@ -334,10 +350,9 @@ void loop(){
 
 void Flash(){
     ESPSerial.println("Alarmed");
-    disarm = 0;
     disarm = analogRead(disarmSig);
-    Serial.println(disarm);
-    if (disarm > 100){
+    arm = analogRead(armSig);
+    if ((disarm > 100) && (arm < 100)){
       resetFunc();
     }
   }
@@ -356,7 +371,11 @@ void back_button(){
             Menu--;
        }
 }
-  
+
+  void Print(){
+    Serial.println("AHHHHHH!!");
+    delay(100);
+  }
 
 
   
