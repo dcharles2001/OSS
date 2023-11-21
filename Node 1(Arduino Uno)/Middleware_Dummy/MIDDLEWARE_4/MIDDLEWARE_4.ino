@@ -11,11 +11,16 @@
 
 #include "painlessMesh.h"
 #include "Arduino_JSON.h"
+#include <SoftwareSerial.h>
+
+SoftwareSerial ESPSerial(D7, D8);
 
 #define   MESH_PREFIX     "OSS"
 #define   MESH_PASSWORD   "FuckROCO"
 #define   MESH_PORT       5555
-#define   NODE_NAME       "Node1"
+#define   NODE_NAME       "Node0"
+#define   OFF_PIN         D5
+#define   ON_PIN          D4
 
 bool firsttimelaunching = true; // dont touch
 bool ismaster           = true; // change me please
@@ -56,16 +61,10 @@ String readSerial(){
    */
   //return "OK";
   String Message;
-  Serial.swap();
-  if (Serial.available() > 0){
-    while (Serial.available() > 0){
-      char character = Serial.read();
+  //Serial.swap();
+  Message = ESPSerial.readStringUntil('\n');
 
-      Message += String(character);
-    }
-  }
-
-  Serial.swap();
+  //Serial.swap();
   return Message;
 }
 
@@ -88,10 +87,65 @@ void MessageSendingFunction(String Message){
     //String msg = payload.Message_to_Send;
     //msg += mesh.getNodeId();
   mesh.sendBroadcast(Message);
-  Serial.println(Message);
+  //Serial.println(Message);
 
   //  PreviousMsg = Message; //payload.Message_to_Send;
   //}
+}
+
+void ReadTerminal(){
+  if (digitalRead(OFF_PIN) == HIGH){
+    digitalWrite(OFF_PIN, LOW);
+  }
+
+  if (Serial.available() > 0){
+    String Data= Serial.readStringUntil(',');
+    Serial.println("Command Accepted");
+
+    if (Data == "off"){
+      Serial.println("Turning Off Alarm");
+      digitalWrite(OFF_PIN, HIGH);
+    }
+  }
+}
+
+bool Off = true;
+
+void off(String Data){
+  if (digitalRead(OFF_PIN) == HIGH){
+    digitalWrite(OFF_PIN, LOW);
+  }
+
+  if ((Data == "off") && (Off == false)){
+      //Serial.println("Turning Off Alarm");
+      digitalWrite(OFF_PIN, HIGH);
+      digitalWrite(ON_PIN, LOW);
+
+      Off = true;
+  }
+}
+
+void On(String Data){
+  if (digitalRead(ON_PIN) == HIGH){
+    digitalWrite(ON_PIN, LOW);
+  }
+
+  if ((Data == "ER01") && (Off == true)){
+    //Serial.println("Turning On Alarm");
+    digitalWrite(ON_PIN, HIGH);
+    digitalWrite(OFF_PIN, LOW);
+    Off = false;
+  }
+}
+
+String SerialTerminalRead(){
+  String Data;
+  if (Serial.available() > 0){
+    Data = Serial.readStringUntil(',');
+    Serial.println("Command Accepted");
+  }
+
+  return Data;
 }
 
 void sendMessage() {
@@ -100,15 +154,27 @@ void sendMessage() {
    * @Returns: None
    * @Details: Used to broadcast a message
    */
-  if (firsttimelaunching){
-      String Message = readSerial();//NodeInformation(); // Collect Node Data
+  //if (firsttimelaunching){
+      //String Message = NodeInformation(); // Collect Node Data
+
+      digitalWrite(OFF_PIN, LOW);
+      digitalWrite(ON_PIN, LOW);
+
+      // MAIN NODE
+      String Message = readSerial();
+
+
+      // MESH
+      //String Message = SerialTerminalRead();
+      
+      
       MessageSendingFunction(Message); // Send the Node Data
 
-      firsttimelaunching = false;
-  }
-  else if (ismaster){
+  //    firsttimelaunching = false;
+  //}
+  //else if (ismaster){
 
-  }
+  //}
 
   
   taskSendMessage.setInterval(TASK_SECOND * 10 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
@@ -117,20 +183,29 @@ void sendMessage() {
 
 // Needed for painless library
 void receivedCallback( uint32_t from, String &msg ) {
-  Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
+  Serial.println(msg.c_str());
+
+  if (msg == "off"){
+    off(msg);
+  }
+  
+  if (msg == "ER01"){
+    On(msg);
+  }
+  
   payload.Incoming_Message = msg;
 }
 
 void newConnectionCallback(uint32_t nodeId) {
-    Serial.printf("New Connection, nodeId = %u\n", nodeId);
+    Serial.println(nodeId);
 }
 
 void changedConnectionCallback() {
-  Serial.printf("Changed connections\n");
+  Serial.println("Changed connections");
 }
 
 void nodeTimeAdjustedCallback(int32_t offset) {
-    Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),offset);
+    Serial.println(mesh.getNodeTime());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -140,11 +215,17 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 
 void setup() {
   Serial.begin(115200);
+  ESPSerial.begin(9600);
+  pinMode(OFF_PIN, OUTPUT);
+  pinMode(ON_PIN, OUTPUT);
+
+  digitalWrite(OFF_PIN, LOW);
+  digitalWrite(ON_PIN, LOW);
 
 //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
 
-  mesh.init( MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT );
+  mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT);
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection(&newConnectionCallback);
   mesh.onChangedConnections(&changedConnectionCallback);
