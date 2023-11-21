@@ -3,7 +3,7 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 
-#define NAMEIMU "god"
+#define NAMEIMU "Jewellery Box"
 
 Adafruit_BNO055 sensor = Adafruit_BNO055(55,BNO055_ADDRESS_B);
 
@@ -32,43 +32,6 @@ void StatusAllGood() {
 void StatusAllBad() {
   digitalWrite(D7, LOW);
   digitalWrite(D6, HIGH);
-}
-
-bool displayCalStatus() {
-  /* Get the four calibration values (0..3) */
-  /* Any sensor data reporting 0 should be ignored, */
-  /* 3 means 'fully calibrated" */
-  uint8_t system, gyro, accel, mag;
-  system = gyro = accel = mag = 0;
-  bool sensorExists = true;
-  bool calibrated;
-  Serial.print("~~");
-  sensor.getCalibration(&system, &gyro, &accel, &mag);
-  if (sensorExists) {
-    /* The data should be ignored until the system calibration is > 0 */
-    //Serial.print("\t");
-    if (!system) {
-      Serial.print("~~");
-      Serial.print("NOCAL");
-      calibrated = false;
-    } else {
-      calibrated = true;
-    }
-
-    /* Display the individual values */
-    //    Serial.print(system, DEC);
-    //    Serial.print("G:");
-    //    Serial.print(gyro, DEC);
-    //    Serial.print("A:");
-    //    Serial.print(accel, DEC);
-    //    Serial.print("M:");
-    //    Serial.print(mag, DEC);
-
-  } else {
-    calibrated = true;
-    ;
-  }
-  return calibrated;
 }
 
 void enumerateI2CBus(void) {
