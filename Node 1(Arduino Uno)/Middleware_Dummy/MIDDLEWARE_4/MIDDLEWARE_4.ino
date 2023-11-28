@@ -22,10 +22,6 @@ SoftwareSerial ESPSerial(D7, D8);
 #define   OFF_PIN         D2
 #define   ON_PIN          D1
 
-bool firsttimelaunching = true; // dont touch
-bool ismaster           = true; // change me please
-bool issecondincommand  = false; // dont touch
-
 Scheduler userScheduler; // to control your personal task
 painlessMesh  mesh;
 
@@ -34,41 +30,30 @@ void sendMessage() ; // Prototype so PlatformIO doesn't complain
 
 Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
 
-struct {
-  String Message_to_Send;
-  String Incoming_Message;
-} payload;
-
-void Voting(){
-  /*
-   * @Param: None
-   * @Returns: None
-   * @Details: Used to generate a random voting number
-   */
-  int NodeNum = sizeof(mesh.getNodeList());
-  int vote = random(0, NodeNum);
-  String ProtoMessage = "Vote;" + vote;
-  String Message = ProtoMessage + ";";
-
-  payload.Message_to_Send = Message;
-}
-
 String readSerial(){
   /*
    * @Param: None
    * @Returns: String Message
    * @Details: Used to read the serial Input on D7 and D8
+   * @Notes: Used in all nodes that require serial interfacing
    */
-  //return "OK";
+
   String Message;
-  //Serial.swap();
+
   Message = ESPSerial.readStringUntil('\n');
 
-  //Serial.swap();
   return Message;
 }
 
 String NodeInformation(){
+  /*
+   * @Param: None
+   * @Returns: None
+   * @Details: Test connection for online cloud system
+   * @Notes: DEPRECIATED
+   */
+
+
   JSONVar NodeData;
   NodeData["NodeActive"] = "true";
   NodeData["NodeAddr"]   = String(mesh.getNodeId());
@@ -79,21 +64,26 @@ String NodeInformation(){
 }
 
 void MessageSendingFunction(String Message){
-  //Serial.println("Sending String");
-  //Serial.println(Message);
-  //static String PreviousMsg = "";
-
-  //if (Message != PreviousMsg){
-    //String msg = payload.Message_to_Send;
-    //msg += mesh.getNodeId();
+  /*
+   * @Param: Message <string_var>
+   * @Returns: None
+   * @Details: used to broadcast a message
+   * @Notes: For all nodes
+   */
+  
   mesh.sendBroadcast(Message);
-  //Serial.println(Message);
-
-  //  PreviousMsg = Message; //payload.Message_to_Send;
-  //}
+  
 }
 
 void ReadTerminal(){
+  /*
+   * @Param: None
+   * @Returns: None
+   * @Details: Used to read the terminal
+   * @Notes: Test command for the Main Node only
+   */
+
+
   if (digitalRead(OFF_PIN) == HIGH){
     digitalWrite(OFF_PIN, LOW);
   }
@@ -112,6 +102,13 @@ void ReadTerminal(){
 bool Off = true;
 
 void off(String Data){
+  /*
+   * @Param: None
+   * @Returns: None
+   * @Details: Used to turn off the alarm
+   * @Notes: Only for the Main Node Only
+   */
+
   if (digitalRead(OFF_PIN) == HIGH){
     digitalWrite(OFF_PIN, LOW);
   }
@@ -126,6 +123,13 @@ void off(String Data){
 }
 
 void On(String Data){
+  /*
+   * @Param: Data <string_var>
+   * @Returns: None
+   * @Details: Used to turn on the On the alarm
+   * @Notes: Only for Main Node only
+   */
+
   if (digitalRead(ON_PIN) == HIGH){
     digitalWrite(ON_PIN, LOW);
   }
@@ -139,6 +143,14 @@ void On(String Data){
 }
 
 String SerialTerminalRead(){
+  /*
+   * @Param: None
+   * @Returns: Data <string_var>
+   * @Details: Used to read a terminal message
+   */
+
+
+
   String Data;
   if (Serial.available() > 0){
     Data = Serial.readStringUntil(',');
@@ -154,6 +166,8 @@ void sendMessage() {
    * @Returns: None
    * @Details: Used to broadcast a message
    */
+
+
   //if (firsttimelaunching){
       //String Message = NodeInformation(); // Collect Node Data
 
@@ -200,14 +214,17 @@ void receivedCallback( uint32_t from, String &msg ) {
   payload.Incoming_Message = msg;
 }
 
+// Needed for painless library
 void newConnectionCallback(uint32_t nodeId) {
     Serial.println(nodeId);
 }
 
+// Needed for painless library
 void changedConnectionCallback() {
   Serial.println("Changed connections");
 }
 
+// Needed for painless library
 void nodeTimeAdjustedCallback(int32_t offset) {
     Serial.println(mesh.getNodeTime());
 }
@@ -218,6 +235,9 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 
 
 void setup() {
+  ///////////////////////////////////////////////////////////////////////////////////////
+  // COPY THIS SECTION - COPY THIS SECTION - COPY THIS SECTION - COPY THIS SECTION - CO//
+  ///////////////////////////////////////////////////////////////////////////////////////
   Serial.begin(115200);
   ESPSerial.begin(9600);
   pinMode(OFF_PIN, OUTPUT);
@@ -237,6 +257,10 @@ void setup() {
 
   userScheduler.addTask(taskSendMessage);
   taskSendMessage.enable();
+
+  ///////////////////////////////////////////////////////////////////////////////////////
+  // COPY THIS SECTION - COPY THIS SECTION - COPY THIS SECTION - COPY THIS SECTION - CO//
+  ///////////////////////////////////////////////////////////////////////////////////////
 }
 
 void loop() {
