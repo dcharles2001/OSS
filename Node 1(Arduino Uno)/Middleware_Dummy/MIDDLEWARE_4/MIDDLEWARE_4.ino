@@ -19,8 +19,8 @@ SoftwareSerial ESPSerial(D7, D8);
 #define   MESH_PASSWORD   "FuckROCO"
 #define   MESH_PORT       5555
 #define   NODE_NAME       "Node0"
-#define   OFF_PIN         D5
-#define   ON_PIN          D4
+#define   OFF_PIN         D2
+#define   ON_PIN          D1
 
 bool firsttimelaunching = true; // dont touch
 bool ismaster           = true; // change me please
@@ -163,6 +163,10 @@ void sendMessage() {
       // MAIN NODE
       String Message = readSerial();
 
+      //testing
+      Serial.println(Message);
+      ReadTerminal();
+
 
       // MESH
       //String Message = SerialTerminalRead();
@@ -177,7 +181,7 @@ void sendMessage() {
   //}
 
   
-  taskSendMessage.setInterval(TASK_SECOND * 10 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
+  taskSendMessage.setInterval(TASK_SECOND * 1 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
 }
 
 
