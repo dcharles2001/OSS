@@ -27,7 +27,7 @@ const int Alarm = 11;
 char Data[Password_Length]; 
 char Master[Password_Length] = "123A"; 
 byte data_count = 0, master_count = 0;
-bool Pass_is_good;
+//bool Pass_is_good;
 keypadEvent customKey;
 const byte ROWS = 4;
 const byte COLS = 4;
@@ -70,19 +70,19 @@ bool countdown(void * /* optional argument given to in/at/every */) {
       lcd.print("(");
       lcd.print(Seconds);
       lcd.print(")");
-    }if(Seconds == 0){
-         lcd.clear();
-      }else if (Seconds < 0){
+    }else if(Seconds == 0){
+      lcd.clear();
+    }else if (Seconds < 0){
       lcd.setCursor(0,0);
       lcd.print("****ALARMED!****");  
       Flash();
       buzzer.playMelody(tune, noteDurations, length);
-      }
+    }
   }
   return true;
 }
 
- void(*resetFunc) (void) = 0;
+void(*resetFunc) (void) = 0;
         
 void setup(){
   ESPSerial.begin(9600);
@@ -336,6 +336,7 @@ void loop(){
                     x = 0;
                     data_count = 0, master_count = 0;
                     lcd.clear();
+                    timer.cancel();
                     lcd.print("Resetting");
                     delay(750);
                     lcd.clear();
@@ -344,16 +345,13 @@ void loop(){
       }
 }
         
-      
-
-
-
 void Flash(){
     ESPSerial.println("Alarmed");
     disarm = analogRead(disarmSig);
     arm = analogRead(armSig);
     if ((disarm > 100) && (arm < 100)){
-      resetFunc();
+      btn = 1;
+      //resetFunc();
     }
   }
 
