@@ -175,16 +175,16 @@ void sendMessage() {
       digitalWrite(ON_PIN, LOW);
 
       // MAIN NODE
-      String Message = readSerial();
+      //String Message = readSerial();
 
       //testing
-      Serial.println(Message);
-      ReadTerminal();
+      //Serial.println(Message);
+      //ReadTerminal();
 
 
       // MESH
-      //String Message = SerialTerminalRead();
-      
+      String Message = SerialTerminalRead();
+      Serial.println(Message);
       
       MessageSendingFunction(Message); // Send the Node Data
 
@@ -211,7 +211,6 @@ void receivedCallback( uint32_t from, String &msg ) {
     On(msg);
   }
   
-  payload.Incoming_Message = msg;
 }
 
 // Needed for painless library
