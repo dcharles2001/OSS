@@ -88,6 +88,10 @@ void ReadTerminal(){
     digitalWrite(OFF_PIN, LOW);
   }
 
+  else if (digitalRead(ON_PIN) == HIGH){
+    digitalWrite(ON_PIN, LOW);
+  }
+
   if (Serial.available() > 0){
     String Data= Serial.readStringUntil(',');
     Serial.println("Command Accepted");
@@ -95,6 +99,11 @@ void ReadTerminal(){
     if (Data == "off"){
       Serial.println("Turning Off Alarm");
       digitalWrite(OFF_PIN, HIGH);
+    }
+
+    else if (Data == "ER01"){
+      Serial.println("Turning On Alarm");
+      digitalWrite(ON_PIN, HIGH);
     }
   }
 }
@@ -204,10 +213,12 @@ void receivedCallback( uint32_t from, String &msg ) {
   Serial.println(msg.c_str());
 
   if (msg == "off"){
+    Serial.println("World!");
     off(msg);
   }
   
   if (msg == "ER01"){
+    Serial.println("Hello");
     On(msg);
   }
   
