@@ -17,7 +17,7 @@
 //SoftwareSerial ESPSerial(D7, D8);
 
 #define   MESH_PREFIX     "OSS"
-#define   MESH_PASSWORD   "FuckROCO"
+#define   MESH_PASSWORD   "OSS123"
 #define   MESH_PORT       5555
 #define   NODE_NAME       "Node2"
 
@@ -115,7 +115,7 @@ void sendMessage() {
    * @Details: Used to broadcast a message
    */
   //if (firsttimelaunching){
-      String Message = "ALL GOOD";//NodeInformation(); // Collect Node Data
+      String Message = "Node2 GOOD";//NodeInformation(); // Collect Node Data
       //String Message = readSerial();
       MessageSendingFunction(Message); // Send the Node Data
 
@@ -126,7 +126,7 @@ void sendMessage() {
   //}
 
   
-  taskSendMessage.setInterval(TASK_SECOND * 10 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
+  taskSendMessage.setInterval(TASK_SECOND * 1 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
 }
 
 void sensors(){
@@ -136,7 +136,8 @@ void sensors(){
   if (Dist > OPEN_DISTANCE){
     Alarm = 1;
     Serial.println("Safe Open");
-    MessageSendingFunction("Safe Open");
+    //MessageSendingFunction("Safe Open");
+    MessageSendingFunction("ER01");
     }else{
         Serial.print("Distance = ");
         Serial.print(Dist);
@@ -147,7 +148,8 @@ void sensors(){
   }
   if (sens == 1){
     Serial.print("Noise Detected");
-    MessageSendingFunction("Noise Detected");
+    //MessageSendingFunction("Noise Detected");
+    MessageSendingFunction("ER01,");
     Alarm = 1;
     sens =0;
     }
