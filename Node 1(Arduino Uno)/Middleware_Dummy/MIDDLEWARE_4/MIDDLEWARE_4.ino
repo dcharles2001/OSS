@@ -16,9 +16,9 @@
 SoftwareSerial ESPSerial(D7, D8);
 
 #define   MESH_PREFIX     "OSS"
-#define   MESH_PASSWORD   "FuckROCO"
+#define   MESH_PASSWORD   "OSS123"
 #define   MESH_PORT       5555
-#define   NODE_NAME       "Node0"
+#define   NODE_NAME       "Node1"
 #define   OFF_PIN         D2
 #define   ON_PIN          D1
 
