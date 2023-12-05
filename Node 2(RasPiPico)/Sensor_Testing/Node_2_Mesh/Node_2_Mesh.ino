@@ -17,7 +17,7 @@
 //SoftwareSerial ESPSerial(D7, D8);
 
 #define   MESH_PREFIX     "OSS"
-#define   MESH_PASSWORD   "OSS123"
+#define   MESH_PASSWORD   "OSSDSCAM"
 #define   MESH_PORT       5555
 #define   NODE_NAME       "Node2"
 
@@ -138,21 +138,24 @@ void sensors(){
     Serial.println("Safe Open");
     //MessageSendingFunction("Safe Open");
     MessageSendingFunction("ER01");
-    }else{
-        Serial.print("Distance = ");
-        Serial.print(Dist);
-        Serial.println(" cm");
-      }
+  }else{
+    Serial.print("Distance = ");
+    Serial.print(Dist);
+    Serial.println(" cm");
+    MessageSendingFunction("Node2 GOOD");
+  }
+
   if (sensorValue == 1){
     sens = 1;
   }
+
   if (sens == 1){
     Serial.print("Noise Detected");
     //MessageSendingFunction("Noise Detected");
     MessageSendingFunction("ER01,");
     Alarm = 1;
     sens =0;
-    }
+  }
   
   taskSendMessage.setInterval(TASK_SECOND * 1 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
 }
