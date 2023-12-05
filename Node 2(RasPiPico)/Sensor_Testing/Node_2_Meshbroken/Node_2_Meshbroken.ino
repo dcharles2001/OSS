@@ -37,7 +37,7 @@ int Sound;
 int Alarm = 0;
 int sensorValue;
 int sens =0;
-int Unlock = 1;
+//int Unlock = 1;
 NewPingESP8266 sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 
 Scheduler userScheduler; // to control your personal task
@@ -132,7 +132,7 @@ void sendMessage() {
 }
 
 void sensors(){
-if(Unlock == 1){
+
   Dist = ((sonar.ping() / 2) * 0.0343);
   sensorValue = digitalRead(sensorPin);
   if (Dist > OPEN_DISTANCE){
@@ -160,9 +160,6 @@ if(Unlock == 1){
   }
   
   taskSendMessage.setInterval(TASK_SECOND * 1 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
-}else{
-  MessageSendingFunction("Node2 GOOD");
-}
 }
 
 void locking(bool Unlock){
@@ -184,17 +181,17 @@ void locking(bool Unlock){
 
 }
 // Needed for painless library
-
+static bool Unlock = false;
 
 void receivedCallback( uint32_t from, String &msg ) {
   Serial.println(Unlock);
   Serial.println(msg.c_str());
-  if(msg.c_str() == "UNLK"){
-    Unlock = 0;
-    //locking(Unlock);
-  }else if(msg.c_str() == "LOCK"){
-    Unlock = 1;
-    //locking(Unlock);
+  if(msg == "UNLK"){
+    Unlock = true;
+    locking(Unlock);
+  }else if(msg == "LOCK"){
+    Unlock = false;
+    locking(Unlock);
   }
 }
 
