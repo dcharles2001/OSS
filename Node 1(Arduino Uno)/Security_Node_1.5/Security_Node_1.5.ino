@@ -4,13 +4,10 @@
 #include "Adafruit_Keypad.h"
 #include <arduino-timer.h>
 #include <ezBuzzer.h>
-#include <SoftwareSerial.h>
+
 #define Password_Length 5 
 #define RLED 12
 #define BTN 13
-#define disarmSig A3
-#define armSig A0
-SoftwareSerial ESPSerial(8,9);
 
 auto timer = timer_create_default();
 int Attempts = 3;
@@ -27,12 +24,11 @@ const int Alarm = 11;
 char Data[Password_Length]; 
 char Master[Password_Length] = "123A"; 
 byte data_count = 0, master_count = 0;
-//bool Pass_is_good;
+bool Pass_is_good;
 keypadEvent customKey;
 const byte ROWS = 4;
 const byte COLS = 4;
-int disarm = 0;
-int arm = 0;
+
 char hexaKeys[ROWS][COLS] = {
   {'1', '2', '3', 'A'},
   {'4', '5', '6', 'B'},
@@ -70,51 +66,35 @@ bool countdown(void * /* optional argument given to in/at/every */) {
       lcd.print("(");
       lcd.print(Seconds);
       lcd.print(")");
-    }else if(Seconds == 0){
-      lcd.clear();
-    }else if (Seconds < 0){
+    }if(Seconds == 0){
+         lcd.clear();
+      }else if (Seconds < 0){
       lcd.setCursor(0,0);
       lcd.print("****ALARMED!****");  
       Flash();
       buzzer.playMelody(tune, noteDurations, length);
-    }
+      }
   }
   return true;
 }
-
-void(*resetFunc) (void) = 0;
+ 
         
 void setup(){
-  ESPSerial.begin(9600);
+  Serial1.begin(115200);
   lcd.init(); 
   lcd.backlight();
   pinMode(RLED, OUTPUT);
   pinMode(Alarm, OUTPUT);
   pinMode(BTN, INPUT);
-  Serial.begin(9600);
+  Serial.begin(115200);
   timer.every(1000, countdown);
   customKeypad.begin();
-  //attachInterrupt(armSig, Print, RISING);
 }
 
 void loop(){
   buzzer.loop();
   customKeypad.tick();
-  arm = analogRead(armSig);
-  Serial.print("Arm = ");
-  Serial.println(arm);
-  disarm = analogRead(disarmSig);
-  Serial.print("Disarm = ");
-  Serial.println(disarm);
-  if(arm > 100){
-    Criminal = 1;
-    CorrectPass = 0;
-    Seconds = 0;
-    timer.tick();
-    }else if(disarm > 100){
-      resetFunc();
-      }
-    
+
   if (RESET == 0){
     if (Criminal == 0){
       if (CorrectPass == 0){
@@ -169,7 +149,6 @@ void loop(){
             lcd.print("Welcome Home");
             lcd.setCursor(0,1);
             lcd.print("Robin DaHouse");
-            ESPSerial.println("UNLK");
             Attempts = 3;
             delay(1500);
             lcd.clear();
@@ -245,7 +224,6 @@ void loop(){
               data_count = 0, master_count = 0;
               lcd.clear();
               lcd.print("Locking");
-              ESPSerial.println("LOCK");
               delay(500);
               lcd.clear();
           break;
@@ -338,23 +316,20 @@ void loop(){
                     x = 0;
                     data_count = 0, master_count = 0;
                     lcd.clear();
-                    timer.cancel();
                     lcd.print("Resetting");
                     delay(750);
-                    lcd.clear();
-                    btn = 0;
+                  lcd.clear();
           }
       }
 }
         
+      
+
+
+
 void Flash(){
-    ESPSerial.println("Alarmed");
-    disarm = analogRead(disarmSig);
-    arm = analogRead(armSig);
-    if ((disarm > 100) && (arm < 100)){
-      btn = 1;
-      //resetFunc();
-    }
+    digitalWrite(RLED, !digitalRead(RLED));
+    Serial1.println("ER01");
   }
 
 
@@ -371,11 +346,7 @@ void back_button(){
             Menu--;
        }
 }
-
-  void Print(){
-    Serial.println("AHHHHHH!!");
-    delay(100);
-  }
+  
 
 
   
