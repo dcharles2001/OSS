@@ -7,7 +7,7 @@
 #include "Arduino_JSON.h"
 
 #define MESH_PREFIX "OSS"
-#define MESH_PASSWORD "FuckROCO"
+#define MESH_PASSWORD "OSSDSCAM"
 #define MESH_PORT 5555
 #define NODE_NAME "Node3"
 
@@ -62,7 +62,7 @@ void sendMessage() {
    * @Details: Used to broadcast a message
    */
   //if (firsttimelaunching){
-      String Message = "ALL GOOD";//NodeInformation(); // Collect Node Data
+      String Message = "Node3 GOOD";//NodeInformation(); // Collect Node Data
       //String Message = readSerial();
       MessageSendingFunction(Message); // Send the Node Data
 
@@ -73,7 +73,7 @@ void sendMessage() {
   //}
 
   
-  taskSendMessage.setInterval(TASK_SECOND * 10 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
+  taskSendMessage.setInterval(TASK_SECOND * 1 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
 }
 
 
@@ -122,6 +122,7 @@ void SetupLEDs() {
   pinMode(D6, OUTPUT);
 }
 void StatusAllGood() {
+  MessageSendingFunction("Node3 GOOD");
   digitalWrite(D7, HIGH);
   digitalWrite(D6, LOW);
 }
@@ -248,6 +249,7 @@ void ReadLineOfData() {
       MessageSendingFunction("ER01");
       StatusAllBad();
     } else {
+      //MessageSendingFunction("Node3 GOOD");
       StatusAllGood();
     }
     prevQuat[arrayPosition] = quat;
