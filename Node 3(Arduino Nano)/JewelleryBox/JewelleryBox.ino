@@ -3,9 +3,105 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 
+#include "painlessMesh.h"
+#include "Arduino_JSON.h"
+
+#define MESH_PREFIX "OSS"
+#define MESH_PASSWORD "FuckROCO"
+#define MESH_PORT 5555
+#define NODE_NAME "Node3"
+
+Scheduler userScheduler;  // to control your personal task
+painlessMesh mesh;
+
+// User stub
+void sendMessage();  // Prototype so PlatformIO doesn't complain
+void ReadLineOfData();
+
+Task taskSendMessage(TASK_SECOND * 1, TASK_FOREVER, &sendMessage);
+Task checkIMU(TASK_SECOND * 1, TASK_FOREVER, &ReadLineOfData);
+
+struct {
+  String Message_to_Send;
+  String Incoming_Message;
+} payload;
+
+String NodeInformation() {
+  /*
+   * @Param: None
+   * @Returns: None
+   * @Details: Test connection for online cloud system
+   * @Notes: DEPRECIATED
+   */
+
+
+  JSONVar NodeData;
+  NodeData["NodeActive"] = "true";
+  NodeData["NodeAddr"] = String(mesh.getNodeId());
+  NodeData["NodeAlarm"] = "false";
+  NodeData["NodeName"] = NODE_NAME;
+  NodeData["Master"] = true;
+  return JSON.stringify(NodeData);
+}
+
+void MessageSendingFunction(String Message) {
+  /*
+   * @Param: Message <string_var>
+   * @Returns: None
+   * @Details: used to broadcast a message
+   * @Notes: For all nodes
+   */
+
+  mesh.sendBroadcast(Message);
+}
+
+void sendMessage() {
+  /*
+   * @Param: None
+   * @Returns: None
+   * @Details: Used to broadcast a message
+   */
+  //if (firsttimelaunching){
+      String Message = "ALL GOOD";//NodeInformation(); // Collect Node Data
+      //String Message = readSerial();
+      MessageSendingFunction(Message); // Send the Node Data
+
+  //    firsttimelaunching = false;
+  //}
+  //else if (ismaster){
+
+  //}
+
+  
+  taskSendMessage.setInterval(TASK_SECOND * 10 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
+}
+
+
+
+// Needed for painless library
+void receivedCallback( uint32_t from, String &msg ) {
+  Serial.println(msg.c_str());
+  payload.Incoming_Message = msg;
+}
+
+// Needed for painless library
+void newConnectionCallback(uint32_t nodeId) {
+  Serial.println(nodeId);
+}
+
+// Needed for painless library
+void changedConnectionCallback() {
+  Serial.println("Changed connections");
+}
+
+// Needed for painless library
+void nodeTimeAdjustedCallback(int32_t offset) {
+  Serial.println(mesh.getNodeTime());
+}
+
 #define NAMEIMU "Jewellery Box"
 
-Adafruit_BNO055 sensor = Adafruit_BNO055(55,BNO055_ADDRESS_B);
+Adafruit_BNO055 sensor = Adafruit_BNO055(55, BNO055_ADDRESS_B);
 
 bool IMUInitialized = false;
 bool IMUCalibrated = false;
@@ -118,16 +214,18 @@ String printAccel(imu::Vector<3> &accel) {
   return ReturnString;
 }
 
-bool checkMovement(imu::Quaternion quat, imu::Vector<3> accel){
+bool checkMovement(imu::Quaternion quat, imu::Vector<3> accel) {
   if (quat.w() > (avgQuat.w() + 0.003) || quat.w() < (avgQuat.w() - 0.003)) {
     return true;
-  } else if (accel.x() > (avgAccel.x() + 1) || accel.x() < (avgAccel.x() - 1)){
+  } else if (accel.x() > (avgAccel.x() + 1) || accel.x() < (avgAccel.x() - 1)) {
     return true;
-  } if (accel.y() > (avgAccel.y() + 1) || accel.y() < (avgAccel.y() - 1)) {
+  }
+  if (accel.y() > (avgAccel.y() + 1) || accel.y() < (avgAccel.y() - 1)) {
     return true;
-  } if (accel.z() > (avgAccel.z() + 1) || accel.z() < (avgAccel.z() - 1)) {
+  }
+  if (accel.z() > (avgAccel.z() + 1) || accel.z() < (avgAccel.z() - 1)) {
     return true;
-  } else{
+  } else {
     return false;
   }
 }
@@ -141,56 +239,58 @@ void ReadLineOfData() {
     // - VECTOR_EULER         - degrees
     // - VECTOR_LINEARACCEL   - m/s^2
     // - VECTOR_GRAVITY       - m/s^2
-      imu::Quaternion quat = sensor.getQuat();
-      imu::Vector<3> accel = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-      if (checkMovement(quat, accel) && enableAlerts == true) {
-        Alert = true;
-        Serial.println("Alert: Movement detected");
-        StatusAllBad();
-      } else{
-        StatusAllGood();
-      }
-      prevQuat[arrayPosition] = quat;
-      prevAccel[arrayPosition] = accel;
-      getAverage();
-      arrayPosition++;
-      if(arrayPosition >= 10)
-        arrayPosition = 0;
-      String deets = printQuat(quat, NAMEIMU);
-      String speed = printAccel(accel);
-      Serial.println(deets + speed);
+    imu::Quaternion quat = sensor.getQuat();
+    imu::Vector<3> accel = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    if (checkMovement(quat, accel) && enableAlerts == true) {
+      Alert = true;
+      Serial.println("Alert: Movement detected");
+      MessageSendingFunction("Alert: Movement detected");
+      StatusAllBad();
+    } else {
+      StatusAllGood();
+    }
+    prevQuat[arrayPosition] = quat;
+    prevAccel[arrayPosition] = accel;
+    getAverage();
+    arrayPosition++;
+    if (arrayPosition >= 10)
+      arrayPosition = 0;
+    String deets = printQuat(quat, NAMEIMU);
+    String speed = printAccel(accel);
+    Serial.println(deets + speed);
+    delay(CaptureDelay);
+    taskSendMessage.setInterval(TASK_SECOND * 1 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
   }
 }
 
-void getAverage()
-{
+void getAverage() {
   double w = 0;
   double x = 0;
   double y = 0;
   double z = 0;
-  for(int i = 0; i < 10; i++){
+  for (int i = 0; i < 10; i++) {
     w += prevQuat[i].w();
     x += prevQuat[i].x();
     y += prevQuat[i].y();
     z += prevQuat[i].z();
   }
-  avgQuat.w() = w/10;
-  avgQuat.x() = x/10;
-  avgQuat.y() = y/10;
-  avgQuat.z() = z/10;
+  avgQuat.w() = w / 10;
+  avgQuat.x() = x / 10;
+  avgQuat.y() = y / 10;
+  avgQuat.z() = z / 10;
   x = 0;
   y = 0;
   z = 0;
-  for(int i = 0; i < 10; i++){
+  for (int i = 0; i < 10; i++) {
     x += prevAccel[i].x();
     y += prevAccel[i].y();
     z += prevAccel[i].z();
   }
-  avgAccel.x() = x/10;
-  avgAccel.y() = y/10;
-  avgAccel.z() = z/10;
-  
-  String averageQuat = printQuat(avgQuat,NAMEIMU);
+  avgAccel.x() = x / 10;
+  avgAccel.y() = y / 10;
+  avgAccel.z() = z / 10;
+
+  String averageQuat = printQuat(avgQuat, NAMEIMU);
   String averageAccel = printAccel(avgAccel);
   Serial.println("Average Quat is " + averageQuat + " Average " + averageAccel);
 }
@@ -203,26 +303,32 @@ void setup() {
   SetupLEDs();
   enumerateI2CBus();
   InitIMU();
-  for(int i = 0; i < 10; i++){
+  for (int i = 0; i < 10; i++) {
     prevQuat[i] = sensor.getQuat();
     prevAccel[i] = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    delay(CaptureDelay);
   }
   getAverage();
+  if (avgQuat.w() == 0 && avgAccel.x() == 0) {
+    Serial.println("IMU unresponsive");
+    ESP.restart();
+  }
+  enableAlerts = true;
+
+  mesh.setDebugMsgTypes(ERROR | STARTUP);  // set before init() so that you can see startup messages
+
+  mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT);
+  mesh.onReceive(&receivedCallback);
+  mesh.onNewConnection(&newConnectionCallback);
+  mesh.onChangedConnections(&changedConnectionCallback);
+  mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
+
+  userScheduler.addTask(taskSendMessage);
+  taskSendMessage.enable();
+  userScheduler.addTask(checkIMU);
+  checkIMU.enable();
 }
 
 void loop() {
-  while (Serial.available() == 0) {
-    ReadLineOfData();
-    if(cycles > 10 && enableAlerts == false)
-    {
-      enableAlerts = true;
-      if(avgQuat.w() == 0 && avgAccel.x() == 0){
-        Serial.println("IMU unresponsive");
-        ESP.restart();
-      }
-    } else {
-      cycles++;
-    }
-    delay(CaptureDelay);
-  }
+  mesh.update();
 }
