@@ -19,7 +19,7 @@ void sendMessage();  // Prototype so PlatformIO doesn't complain
 void ReadLineOfData();
 
 Task taskSendMessage(TASK_SECOND * 1, TASK_FOREVER, &sendMessage);
-Task checkIMU(TASK_SECOND * 1, TASK_FOREVER, &ReadLineOfData);
+Task checkIMU(TASK_SECOND * 0.5, TASK_FOREVER, &ReadLineOfData);
 
 struct {
   String Message_to_Send;
@@ -244,7 +244,8 @@ void ReadLineOfData() {
     if (checkMovement(quat, accel) && enableAlerts == true) {
       Alert = true;
       Serial.println("Alert: Movement detected");
-      MessageSendingFunction("Alert: Movement detected");
+      //MessageSendingFunction("Alert: Movement detected");
+      MessageSendingFunction("ER01");
       StatusAllBad();
     } else {
       StatusAllGood();
@@ -257,7 +258,7 @@ void ReadLineOfData() {
       arrayPosition = 0;
     String deets = printQuat(quat, NAMEIMU);
     String speed = printAccel(accel);
-    Serial.println(deets + speed);
+    //Serial.println(deets + speed);
     delay(CaptureDelay);
     taskSendMessage.setInterval(TASK_SECOND * 1 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
   }
@@ -290,9 +291,9 @@ void getAverage() {
   avgAccel.y() = y / 10;
   avgAccel.z() = z / 10;
 
-  String averageQuat = printQuat(avgQuat, NAMEIMU);
-  String averageAccel = printAccel(avgAccel);
-  Serial.println("Average Quat is " + averageQuat + " Average " + averageAccel);
+ // String averageQuat = printQuat(avgQuat, NAMEIMU);
+  //String averageAccel = printAccel(avgAccel);
+  //Serial.println("Average Quat is " + averageQuat + " Average " + averageAccel);
 }
 
 void setup() {
