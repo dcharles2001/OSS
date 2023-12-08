@@ -102,7 +102,7 @@ Adafruit_BNO055 sensor = Adafruit_BNO055(55, BNO055_ADDRESS_B);
 bool IMUInitialized = false;
 bool IMUCalibrated = false;
 bool IMUPresent = false;
-bool Alert = false;
+bool Alert = true;
 bool enableAlerts = false;
 unsigned long CaptureDelay = 100;
 imu::Quaternion prevQuat[10];
@@ -280,8 +280,9 @@ void ReadLineOfData() {
       //MessageSendingFunction("Alert: Movement detected");
       MessageSendingFunction("ER01");
       StatusAllBad();
-    } else {
+    } else if(checkMovement(quat,accel) == false){
       //MessageSendingFunction("Node3 GOOD");
+      Alert = false;
       StatusAllGood();
     }
     prevQuat[arrayPosition] = quat;
@@ -338,12 +339,10 @@ void setup() {
   SetupLEDs();
   enumerateI2CBus();
   InitIMU();
-  for (int i = 0; i < 10; i++) {
-    prevQuat[i] = sensor.getQuat();
-    prevAccel[i] = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-    delay(CaptureDelay);
+  while(Alert == true)
+  {
+    ReadLineOfData();
   }
-  getAverage();
   if (avgQuat.w() == 0 && avgAccel.x() == 0) {
     Serial.println("IMU unresponsive");
     ESP.restart();
