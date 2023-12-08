@@ -39,8 +39,10 @@ String readSerial(){
    */
 
   String Message;
-
-  Message = ESPSerial.readStringUntil('\n');
+  if (ESPSerial.available() > 0){
+    Message = ESPSerial.readStringUntil(',');
+    Serial.println("Command Read");
+  }
 
   return Message;
 }
