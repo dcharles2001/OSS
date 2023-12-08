@@ -186,10 +186,13 @@ static bool Unlock = false;
 void receivedCallback( uint32_t from, String &msg ) {
   Serial.println(Unlock);
   Serial.println(msg.c_str());
+
   if(msg == "UNLK"){
+    Serial.println("ROCO507z Unlocking");
     Unlock = true;
     locking(Unlock);
   }else if(msg == "LOCK"){
+    Serial.println("ROCO507z Locking");
     Unlock = false;
     locking(Unlock);
   }
