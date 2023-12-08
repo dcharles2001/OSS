@@ -111,7 +111,7 @@ imu::Vector<3> prevAccel[10];
 imu::Vector<3> avgAccel;
 int arrayPosition = 0;
 int cycles = 0;
-int Unlock = 1;
+bool Unlock = false;
 
 void locking(bool Unlock){
   Serial.println("Hello World!");
@@ -137,12 +137,12 @@ void receivedCallback( uint32_t from, String &msg ) {
   Serial.println(Unlock);
   Serial.println(msg.c_str());
   if(msg == "UNLK"){
-    Unlock = 0;
+    Unlock = true;
     Serial.println("World!");
     locking(Unlock);
   }
   if(msg == "LOCK"){
-    Unlock = 1;
+    Unlock = false;
     Serial.println("Hello!");
     locking(Unlock);
   }
