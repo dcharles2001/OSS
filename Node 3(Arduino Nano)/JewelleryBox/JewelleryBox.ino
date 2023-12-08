@@ -79,10 +79,6 @@ void sendMessage() {
 
 
 // Needed for painless library
-void receivedCallback( uint32_t from, String &msg ) {
-  Serial.println(msg.c_str());
-  payload.Incoming_Message = msg;
-}
 
 // Needed for painless library
 void newConnectionCallback(uint32_t nodeId) {
@@ -115,6 +111,22 @@ imu::Vector<3> prevAccel[10];
 imu::Vector<3> avgAccel;
 int arrayPosition = 0;
 int cycles = 0;
+int Unlock = 1;
+
+void receivedCallback( uint32_t from, String &msg ) {
+  Serial.println(Unlock);
+  Serial.println(msg.c_str());
+  if(msg == "UNLK"){
+    Unlock = 0;
+    Serial.println("World!");
+    locking(Unlock);
+  }
+  if(msg == "LOCK"){
+    Unlock = 1;
+    Serial.println("Hello!");
+    locking(Unlock);
+  }
+}
 
 
 void SetupLEDs() {
