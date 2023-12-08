@@ -113,6 +113,26 @@ int arrayPosition = 0;
 int cycles = 0;
 int Unlock = 1;
 
+void locking(bool Unlock){
+  Serial.println("Hello World!");
+  if (Unlock){
+    Serial.println("System Unlocked");
+    taskSendMessage.disable();
+    checkIMU.disable();
+    userScheduler.deleteTask(taskSendMessage);
+    userScheduler.deleteTask(checkIMU);
+  }
+  else if (!Unlock){
+    Serial.println("System Locked");
+    userScheduler.addTask(taskSendMessage);
+    userScheduler.addTask(checkIMU);
+    taskSendMessage.enable();
+    checkIMU.enable();
+  }
+
+}
+
+
 void receivedCallback( uint32_t from, String &msg ) {
   Serial.println(Unlock);
   Serial.println(msg.c_str());
