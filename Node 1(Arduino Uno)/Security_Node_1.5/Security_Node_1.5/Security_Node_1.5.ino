@@ -169,7 +169,7 @@ void loop(){
             lcd.print("Welcome Home");
             lcd.setCursor(0,1);
             lcd.print("Robin DaHouse");
-            ESPSerial.println("UNLK");
+            ESPSerial.println("UNLK,");
             Attempts = 3;
             delay(1500);
             lcd.clear();
@@ -245,7 +245,7 @@ void loop(){
               data_count = 0, master_count = 0;
               lcd.clear();
               lcd.print("Locking");
-              ESPSerial.println("LOCK");
+              ESPSerial.println("LOCK,");
               delay(500);
               lcd.clear();
           break;
@@ -348,7 +348,7 @@ void loop(){
 }
         
 void Flash(){
-    ESPSerial.println("Alarmed");
+    ESPSerial.println("Alarmed,");
     disarm = analogRead(disarmSig);
     arm = analogRead(armSig);
     if ((disarm > 100) && (arm < 100)){

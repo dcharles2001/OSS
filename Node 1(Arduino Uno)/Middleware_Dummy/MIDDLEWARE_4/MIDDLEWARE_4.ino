@@ -28,7 +28,15 @@ painlessMesh  mesh;
 // User stub
 void sendMessage() ; // Prototype so PlatformIO doesn't complain
 
+void allgood();
+
 Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
+Task nodegood( TASK_SECOND * 1 , TASK_FOREVER, &allgood );
+
+void allgood(){
+  mesh.sendBroadcast("Node1 GOOD");
+  nodegood.setInterval(TASK_SECOND * 1 /* 10 Seconds */ /*random( TASK_SECOND * 1, TASK_SECOND * 5 )*/);
+}
 
 String readSerial(){
   /*
@@ -130,6 +138,8 @@ void off(String Data){
       digitalWrite(ON_PIN, LOW);
 
       Off = true;
+      userScheduler.addTask(nodegood);
+      nodegood.enable();
   }
 }
 
@@ -150,6 +160,8 @@ void On(String Data){
     digitalWrite(ON_PIN, HIGH);
     digitalWrite(OFF_PIN, LOW);
     Off = false;
+    nodegood.disable();
+    userScheduler.deleteTask(nodegood);
   }
 }
 
@@ -269,6 +281,8 @@ void setup() {
 
   userScheduler.addTask(taskSendMessage);
   taskSendMessage.enable();
+  userScheduler.addTask(nodegood);
+  nodegood.enable();
 
   ///////////////////////////////////////////////////////////////////////////////////////
   // COPY THIS SECTION - COPY THIS SECTION - COPY THIS SECTION - COPY THIS SECTION - CO//
